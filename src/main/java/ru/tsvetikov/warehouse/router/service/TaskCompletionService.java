@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.tsvetikov.warehouse.router.exception.CommonBackendException;
+import ru.tsvetikov.warehouse.router.exception.AppException;
 import ru.tsvetikov.warehouse.router.model.db.entity.WarehouseTask;
 import ru.tsvetikov.warehouse.router.model.db.repository.WarehouseTaskRepository;
 
@@ -21,7 +21,7 @@ public class TaskCompletionService {
     @Transactional
     public void finalizeTask(Long taskId, Integer confirmedQuantity) {
         WarehouseTask task = warehouseTaskRepository.findById(taskId)
-                .orElseThrow(() -> new CommonBackendException(
+                .orElseThrow(() -> new AppException(
                         String.format("Task with id: %s not found", taskId), HttpStatus.NOT_FOUND));
 
         if (task.getOrder() != null && task.getProduct() != null) {

@@ -7,7 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import ru.tsvetikov.warehouse.router.event.OrderItemCompletedEvent;
 import ru.tsvetikov.warehouse.router.event.OrderProcessingStartedEvent;
-import ru.tsvetikov.warehouse.router.exception.CommonBackendException;
+import ru.tsvetikov.warehouse.router.exception.AppException;
 import ru.tsvetikov.warehouse.router.model.db.entity.Order;
 import ru.tsvetikov.warehouse.router.model.db.entity.OrderItem;
 import ru.tsvetikov.warehouse.router.model.db.entity.Product;
@@ -37,7 +37,7 @@ public class OrderProcessingListener {
     public void onOrderProcessingStarted(OrderProcessingStartedEvent event) {
         String orderNumber = event.orderNumber();
         Order order = orderRepository.findByOrderNumber(orderNumber)
-                .orElseThrow(() -> new CommonBackendException(
+                .orElseThrow(() -> new AppException(
                         String.format("Order with number '%s' not found", orderNumber), HttpStatus.NOT_FOUND));
 
         WarehouseTaskType taskType = order.getType() == OrderType.INBOUND

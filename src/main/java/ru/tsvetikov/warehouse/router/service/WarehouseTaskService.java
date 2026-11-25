@@ -10,7 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.tsvetikov.warehouse.router.event.TaskCompletedEvent;
-import ru.tsvetikov.warehouse.router.exception.CommonBackendException;
+import ru.tsvetikov.warehouse.router.exception.AppException;
 import ru.tsvetikov.warehouse.router.model.db.entity.*;
 import ru.tsvetikov.warehouse.router.model.db.repository.*;
 import ru.tsvetikov.warehouse.router.model.dto.request.WarehouseTaskRequest;
@@ -55,15 +55,15 @@ public class WarehouseTaskService {
         }
 
         if (request.type() == WarehouseTaskType.PICKING && sourceLocation == null) {
-            throw new CommonBackendException(
+            throw new AppException(
                     "Source location is required for PICKING task", HttpStatus.BAD_REQUEST);
         }
         if (request.type() == WarehouseTaskType.RECEIVING && targetLocation == null) {
-            throw new CommonBackendException(
+            throw new AppException(
                     "Target location is required for RECEIVING task", HttpStatus.BAD_REQUEST);
         }
         if (request.type() == WarehouseTaskType.MOVEMENT && (sourceLocation == null || targetLocation == null)) {
-            throw new CommonBackendException(
+            throw new AppException(
                     "Both source and target locations are required for MOVEMENT task", HttpStatus.BAD_REQUEST);
         }
 
@@ -136,7 +136,7 @@ public class WarehouseTaskService {
         WarehouseTask task = findTaskOrThrow(id);
 
         if (task.getStatus() != WarehouseTaskStatus.CREATED) {
-            throw new CommonBackendException(
+            throw new AppException(
                     String.format("Cannot update task with status: %s", task.getStatus()), HttpStatus.BAD_REQUEST);
         }
 
@@ -146,12 +146,12 @@ public class WarehouseTaskService {
 
         if (request.plannedQuantity() != null) {
             if (request.plannedQuantity() <= 0) {
-                throw new CommonBackendException("Quantity must be positive", HttpStatus.BAD_REQUEST);
+                throw new AppException("Quantity must be positive", HttpStatus.BAD_REQUEST);
             }
             if (task.getOrder() != null && task.getProduct() != null) {
                 int remaining = orderItemService.getRemainingQuantity(task.getOrder(), task.getProduct());
                 if (request.plannedQuantity() > remaining) {
-                    throw new CommonBackendException(
+                    throw new AppException(
                             String.format("Cannot exceed remaining order quantity. Remaining: %d", remaining),
                             HttpStatus.BAD_REQUEST);
                 }
@@ -166,7 +166,7 @@ public class WarehouseTaskService {
         if (request.productSku() != null && !request.productSku().isBlank()
             && !request.productSku().equals(task.getProduct().getSku())) {
             if (task.getOrder() != null) {
-                throw new CommonBackendException(
+                throw new AppException(
                         "Cannot change product for task linked to order. Cancel this task and create a new one.",
                         HttpStatus.BAD_REQUEST);
             }
@@ -193,7 +193,7 @@ public class WarehouseTaskService {
         if (request.orderNumber() != null && !request.orderNumber().isBlank()) {
             if (task.getOrder() != null &&
                 !request.orderNumber().equals(task.getOrder().getOrderNumber())) {
-                throw new CommonBackendException("Cannot change order for existing task", HttpStatus.BAD_REQUEST);
+                throw new AppException("Cannot change order for existing task", HttpStatus.BAD_REQUEST);
             }
             if (task.getOrder() == null) {
                 Order order = findOrderByNumberOrThrow(request.orderNumber());
@@ -211,16 +211,16 @@ public class WarehouseTaskService {
         }
 
         if (task.getType() == WarehouseTaskType.PICKING && task.getSourceLocation() == null) {
-            throw new CommonBackendException(
+            throw new AppException(
                     "Source location is required for PICKING task", HttpStatus.BAD_REQUEST);
         }
         if (task.getType() == WarehouseTaskType.RECEIVING && task.getTargetLocation() == null) {
-            throw new CommonBackendException(
+            throw new AppException(
                     "Target location is required for RECEIVING task", HttpStatus.BAD_REQUEST);
         }
         if (task.getType() == WarehouseTaskType.MOVEMENT &&
             (task.getSourceLocation() == null || task.getTargetLocation() == null)) {
-            throw new CommonBackendException(
+            throw new AppException(
                     "Both source and target locations are required for MOVEMENT task", HttpStatus.BAD_REQUEST);
         }
 
@@ -236,7 +236,7 @@ public class WarehouseTaskService {
         if (task.getStatus() != WarehouseTaskStatus.CREATED &&
             task.getStatus() != WarehouseTaskStatus.ASSIGNED &&
             task.getStatus() != WarehouseTaskStatus.IN_PROGRESS) {
-            throw new CommonBackendException(
+            throw new AppException(
                     String.format("Cannot cancel task with status: %s", task.getStatus()),
                     HttpStatus.BAD_REQUEST);
         }
@@ -261,7 +261,7 @@ public class WarehouseTaskService {
         WarehouseTask task = findTaskOrThrow(id);
 
         if (task.getStatus() != WarehouseTaskStatus.CREATED) {
-            throw new CommonBackendException(
+            throw new AppException(
                     String.format("Cannot assign task with status: %s", task.getStatus()), HttpStatus.BAD_REQUEST);
         }
 
@@ -284,7 +284,7 @@ public class WarehouseTaskService {
             try {
                 assignTask(task.id(), username);
                 taken++;
-            } catch (CommonBackendException e) {
+            } catch (AppException e) {
                 log.warn("Could not take task {}: {}", task.id(), e.getMessage());
             }
         }
@@ -298,7 +298,7 @@ public class WarehouseTaskService {
         WarehouseTask task = findTaskOrThrow(id);
 
         if (task.getStatus() != WarehouseTaskStatus.ASSIGNED) {
-            throw new CommonBackendException(
+            throw new AppException(
                     String.format("Cannot start task with status: %s", task.getStatus()), HttpStatus.BAD_REQUEST);
         }
 
@@ -314,7 +314,7 @@ public class WarehouseTaskService {
         WarehouseTask task = findTaskOrThrow(id);
 
         if (task.getStatus() != WarehouseTaskStatus.IN_PROGRESS) {
-            throw new CommonBackendException(
+            throw new AppException(
                     String.format("Cannot complete task with status: %s", task.getStatus()),
                     HttpStatus.BAD_REQUEST);
         }
@@ -322,7 +322,7 @@ public class WarehouseTaskService {
         int finalQuantity = confirmedQuantity != null ? confirmedQuantity : task.getPlannedQuantity();
 
         if (finalQuantity < 0) {
-            throw new CommonBackendException("Confirmed quantity cannot be negative", HttpStatus.BAD_REQUEST);
+            throw new AppException("Confirmed quantity cannot be negative", HttpStatus.BAD_REQUEST);
         }
 
         task.setStatus(WarehouseTaskStatus.COMPLETED);
@@ -364,7 +364,7 @@ public class WarehouseTaskService {
 
     private WarehouseTask findTaskOrThrow(Long id) {
         return warehouseTaskRepository.findById(id)
-                .orElseThrow(() -> new CommonBackendException(
+                .orElseThrow(() -> new AppException(
                         String.format("Task with id: %s not found", id), HttpStatus.NOT_FOUND));
     }
 
@@ -397,7 +397,7 @@ public class WarehouseTaskService {
             attempts++;
         }
         if (warehouseTaskRepository.existsByTaskNumber(taskNumber)) {
-            throw new CommonBackendException("Failed to generate unique task number after 3 attempts",
+            throw new AppException("Failed to generate unique task number after 3 attempts",
                     HttpStatus.CONFLICT);
         }
         return taskNumber;
@@ -409,24 +409,24 @@ public class WarehouseTaskService {
         switch (task.getType()) {
             case PICKING -> {
                 if (task.getSourceLocation() == null) {
-                    throw new CommonBackendException("Source location is required for PICKING task", HttpStatus.BAD_REQUEST);
+                    throw new AppException("Source location is required for PICKING task", HttpStatus.BAD_REQUEST);
                 }
                 stockService.decreaseStock(productSku, task.getSourceLocation().getCode(), confirmedQuantity);
             }
             case MOVEMENT -> {
                 if (task.getSourceLocation() == null || task.getTargetLocation() == null) {
-                    throw new CommonBackendException("Both locations are required for MOVEMENT task", HttpStatus.BAD_REQUEST);
+                    throw new AppException("Both locations are required for MOVEMENT task", HttpStatus.BAD_REQUEST);
                 }
                 stockService.transferStock(productSku, confirmedQuantity,
                         task.getSourceLocation().getCode(), task.getTargetLocation().getCode());
             }
             case RECEIVING -> {
                 if (task.getTargetLocation() == null) {
-                    throw new CommonBackendException("Target location is required for RECEIVING task", HttpStatus.BAD_REQUEST);
+                    throw new AppException("Target location is required for RECEIVING task", HttpStatus.BAD_REQUEST);
                 }
                 stockService.increaseStock(productSku, task.getTargetLocation().getCode(), confirmedQuantity);
             }
-            case null, default -> throw new CommonBackendException(
+            case null, default -> throw new AppException(
                     String.format("Unsupported task type for stock update: %s", task.getType()),
                     HttpStatus.BAD_REQUEST);
         }

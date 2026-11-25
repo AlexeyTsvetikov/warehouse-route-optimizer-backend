@@ -7,7 +7,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.tsvetikov.warehouse.router.exception.CommonBackendException;
+import ru.tsvetikov.warehouse.router.exception.AppException;
 import ru.tsvetikov.warehouse.router.model.db.entity.Category;
 import ru.tsvetikov.warehouse.router.model.db.entity.Product;
 import ru.tsvetikov.warehouse.router.model.db.repository.ProductRepository;
@@ -29,7 +29,7 @@ public class ProductService {
     public Product getBySku(String sku) {
         validateSku(sku);
         return productRepository.findBySkuIgnoreCase(sku)
-                .orElseThrow(() -> new CommonBackendException(
+                .orElseThrow(() -> new AppException(
                         String.format("Product with SKU '%s' not found", sku), HttpStatus.NOT_FOUND));
     }
 
@@ -101,7 +101,7 @@ public class ProductService {
         Product product = findProductOrThrow(id);
 
         if (!product.getIsActive()) {
-            throw new CommonBackendException("Product is already deleted", HttpStatus.CONFLICT);
+            throw new AppException("Product is already deleted", HttpStatus.CONFLICT);
         }
 
         product.setIsActive(false);
@@ -113,7 +113,7 @@ public class ProductService {
         Product product = findProductOrThrow(id);
 
         if (product.getIsActive()) {
-            throw new CommonBackendException("Product is already active", HttpStatus.CONFLICT);
+            throw new AppException("Product is already active", HttpStatus.CONFLICT);
         }
 
         product.setIsActive(true);
@@ -123,7 +123,7 @@ public class ProductService {
 
     private Product findProductOrThrow(Long id) {
         return productRepository.findById(id)
-                .orElseThrow(() -> new CommonBackendException(
+                .orElseThrow(() -> new AppException(
                         String.format("Product with id: %s not found", id), HttpStatus.NOT_FOUND));
     }
 
@@ -133,7 +133,7 @@ public class ProductService {
 
     private void validateSku(String sku) {
         if (sku == null || sku.isBlank()) {
-            throw new CommonBackendException("Sku must not be blank", HttpStatus.BAD_REQUEST);
+            throw new AppException("Sku must not be blank", HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -144,7 +144,7 @@ public class ProductService {
 
     private void checkSkuUniqueness(String sku) {
         if (productRepository.existsBySkuIgnoreCase(sku)) {
-            throw new CommonBackendException(
+            throw new AppException(
                     String.format("Product with SKU '%s' already exists", sku), HttpStatus.CONFLICT);
         }
     }

@@ -10,7 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.tsvetikov.warehouse.router.event.OrderItemCompletedEvent;
-import ru.tsvetikov.warehouse.router.exception.CommonBackendException;
+import ru.tsvetikov.warehouse.router.exception.AppException;
 import ru.tsvetikov.warehouse.router.model.db.entity.Order;
 import ru.tsvetikov.warehouse.router.model.db.entity.OrderItem;
 import ru.tsvetikov.warehouse.router.model.db.entity.Product;
@@ -105,7 +105,7 @@ public class OrderItemService {
 
         if (quantityChanged) {
             if (request.quantity() <= 0) {
-                throw new CommonBackendException("Quantity must be positive", HttpStatus.BAD_REQUEST);
+                throw new AppException("Quantity must be positive", HttpStatus.BAD_REQUEST);
             }
             item.setQuantity(request.quantity());
         }
@@ -132,7 +132,7 @@ public class OrderItemService {
     @Transactional
     public void addCollectedQuantity(Order order, Product product, int quantityToAdd) {
         OrderItem orderItem = orderItemRepository.findByOrderAndProduct(order, product)
-                .orElseThrow(() -> new CommonBackendException(
+                .orElseThrow(() -> new AppException(
                         "OrderItem not found for order " + order.getOrderNumber() +
                         " and product " + product.getSku(), HttpStatus.NOT_FOUND));
 
@@ -143,7 +143,7 @@ public class OrderItemService {
     @Transactional(readOnly = true)
     public int getRemainingQuantity(Order order, Product product) {
         OrderItem orderItem = orderItemRepository.findByOrderAndProduct(order, product)
-                .orElseThrow(() -> new CommonBackendException("OrderItem not found", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new AppException("OrderItem not found", HttpStatus.NOT_FOUND));
         return orderItem.getQuantity() - orderItem.getCollectedQuantity();
     }
 
@@ -153,15 +153,15 @@ public class OrderItemService {
         validateOrderItemBelongsToOrder(item, orderNumber);
 
         if (collectedQuantity == null) {
-            throw new CommonBackendException("Collected quantity must not be null", HttpStatus.BAD_REQUEST);
+            throw new AppException("Collected quantity must not be null", HttpStatus.BAD_REQUEST);
         }
 
         if (collectedQuantity < 0) {
-            throw new CommonBackendException("Collected quantity cannot be negative", HttpStatus.BAD_REQUEST);
+            throw new AppException("Collected quantity cannot be negative", HttpStatus.BAD_REQUEST);
         }
 
         if (collectedQuantity > item.getQuantity()) {
-            throw new CommonBackendException(
+            throw new AppException(
                     "Collected quantity cannot exceed ordered quantity", HttpStatus.BAD_REQUEST);
         }
 
@@ -180,7 +180,7 @@ public class OrderItemService {
 
     private OrderItem findOrderItemOrThrow(Long id) {
         return orderItemRepository.findById(id)
-                .orElseThrow(() -> new CommonBackendException(
+                .orElseThrow(() -> new AppException(
                         String.format("Order item with id: %s not found", id), HttpStatus.NOT_FOUND));
     }
 
@@ -194,14 +194,14 @@ public class OrderItemService {
 
     private void validateOrderCanBeModified(Order order) {
         if (order.getStatus() != OrderStatus.NEW) {
-            throw new CommonBackendException(
+            throw new AppException(
                     String.format("Cannot modify order with status: %s", order.getStatus()), HttpStatus.BAD_REQUEST);
         }
     }
 
     private void checkProductNotInOrder(Order order, Product product) {
         if (orderItemRepository.existsByOrderIdAndProductId(order.getId(), product.getId())) {
-            throw new CommonBackendException(
+            throw new AppException(
                     "Product already exists in this order", HttpStatus.CONFLICT);
         }
     }
@@ -209,7 +209,7 @@ public class OrderItemService {
     private void validateOrderItemBelongsToOrder(OrderItem orderItem, String expectedOrderNumber) {
         String actualOrderNumber = orderItem.getOrder().getOrderNumber();
         if (!expectedOrderNumber.equals(actualOrderNumber)) {
-            throw new CommonBackendException(
+            throw new AppException(
                     String.format("Order item %d belongs to order '%s', not '%s'",
                             orderItem.getId(), actualOrderNumber, expectedOrderNumber), HttpStatus.BAD_REQUEST);
         }

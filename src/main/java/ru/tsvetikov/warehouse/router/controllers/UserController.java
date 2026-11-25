@@ -1,4 +1,4 @@
-package ru.tsvetikov.warehouse.router.controllers.api;
+package ru.tsvetikov.warehouse.router.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -14,9 +14,8 @@ import ru.tsvetikov.warehouse.router.model.dto.request.ChangePasswordRequest;
 import ru.tsvetikov.warehouse.router.model.dto.request.UserCreateRequest;
 import ru.tsvetikov.warehouse.router.model.dto.request.UserUpdateRequest;
 import ru.tsvetikov.warehouse.router.model.dto.response.UserResponse;
+import ru.tsvetikov.warehouse.router.model.enums.Role;
 import ru.tsvetikov.warehouse.router.service.UserService;
-
-import java.util.List;
 
 @Tag(name = "Users", description = "Управление пользователями системы")
 @RestController
@@ -38,12 +37,22 @@ public class UserController {
         return userService.getById(id);
     }
 
-    @Operation(summary = "Получить всех пользователей с пагинацией")
+    @Operation(summary = "Получить всех пользователей с пагинацией, фильтром по роли и поиском")
     @GetMapping
-    public Page<UserResponse> getAll(@RequestParam(defaultValue = "1") @Min(1) Integer page,
-                                     @RequestParam(defaultValue = "10") @Min(1) @Max(100) Integer perPage,
-                                     @RequestParam(defaultValue = "username") String sort,
-                                     @RequestParam(defaultValue = "ASC") Sort.Direction order) {
+    public Page<UserResponse> getAll(
+            @RequestParam(required = false) Role role,
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "1") @Min(1) Integer page,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(100) Integer perPage,
+            @RequestParam(defaultValue = "username") String sort,
+            @RequestParam(defaultValue = "ASC") Sort.Direction order
+    ) {
+        if (role != null) {
+            return userService.getByRole(role, page, perPage, sort, order);
+        }
+        if (search != null && !search.isBlank()) {
+            return userService.search(search.trim(), page, perPage, sort, order);
+        }
         return userService.getAll(page, perPage, sort, order);
     }
 
@@ -61,12 +70,11 @@ public class UserController {
         userService.changePassword(id, request);
     }
 
-    @Operation(summary = "Поиск пользователей по логину")
-    @GetMapping("/search")
-    public List<UserResponse> search(@RequestParam String query,
-                                     @RequestParam(defaultValue = "1") int page,
-                                     @RequestParam(defaultValue = "20") int size) {
-        return userService.search(query, page, size, "username", Sort.Direction.ASC).getContent();
+    @Operation(summary = "Изменить собственный пароль")
+    @PostMapping("/change-password/self")
+    @ResponseStatus(HttpStatus.OK)
+    public void changeOwnPassword(@RequestBody @Valid ChangePasswordRequest request) {
+        userService.changePasswordForCurrentUser(request);
     }
 
     @Operation(summary = "Удалить пользователя")

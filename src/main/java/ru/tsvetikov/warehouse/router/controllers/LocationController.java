@@ -1,4 +1,4 @@
-package ru.tsvetikov.warehouse.router.controllers.api;
+package ru.tsvetikov.warehouse.router.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -9,12 +9,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ru.tsvetikov.warehouse.router.model.dto.request.LocationRequest;
 import ru.tsvetikov.warehouse.router.model.dto.response.LocationResponse;
 import ru.tsvetikov.warehouse.router.service.LocationService;
-
-import java.util.List;
 
 @Tag(name = "Locations", description = "Управление ячейками склада")
 @RestController
@@ -36,30 +35,30 @@ public class LocationController {
         return locationService.getById(id);
     }
 
-    @Operation(summary = "Получить все ячейки с пагинацией")
+    @Operation(summary = "Получить все ячейки с пагинацией и поиском")
     @GetMapping
-    public Page<LocationResponse> getAll(@RequestParam(defaultValue = "1") @Min(1) Integer page,
-                                         @RequestParam(defaultValue = "10") @Min(1) @Max(100) Integer perPage,
-                                         @RequestParam(defaultValue = "code") String sort,
-                                         @RequestParam(defaultValue = "ASC") Sort.Direction order) {
+    public Page<LocationResponse> getAll(
+            @RequestParam(defaultValue = "1") @Min(1) Integer page,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(100) Integer perPage,
+            @RequestParam(defaultValue = "code") String sort,
+            @RequestParam(defaultValue = "ASC") Sort.Direction order,
+            @RequestParam(required = false) String search
+    ) {
+        if (search != null && !search.isBlank()) {
+            return locationService.search(search.trim(), page, perPage, sort, order);
+        }
         return locationService.getAll(page, perPage, sort, order);
     }
 
-    @Operation(summary = "Поиск ячеек по уникальному коду")
-    @GetMapping("/search")
-    public List<LocationResponse> search(@RequestParam String query,
-                                        @RequestParam(defaultValue = "1") int page,
-                                        @RequestParam(defaultValue = "20") int size) {
-        return locationService.search(query, page, size, "code", Sort.Direction.ASC).getContent();
-    }
-
     @Operation(summary = "Обновить ячейку")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @PutMapping("/{id}")
     public LocationResponse update(@PathVariable Long id, @RequestBody @Valid LocationRequest request) {
         return locationService.update(id, request);
     }
 
     @Operation(summary = "Удалить ячейку")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
@@ -67,6 +66,7 @@ public class LocationController {
     }
 
     @Operation(summary = "Восстановить ячейку")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @PatchMapping("/{id}/activate")
     public LocationResponse activate(@PathVariable Long id) {
         return locationService.activate(id);

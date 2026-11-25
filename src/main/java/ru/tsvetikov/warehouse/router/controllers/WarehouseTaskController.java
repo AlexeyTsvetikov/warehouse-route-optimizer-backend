@@ -1,4 +1,4 @@
-package ru.tsvetikov.warehouse.router.controllers.api;
+package ru.tsvetikov.warehouse.router.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import ru.tsvetikov.warehouse.router.model.dto.request.WarehouseTaskRequest;
 import ru.tsvetikov.warehouse.router.model.dto.response.WarehouseTaskResponse;
@@ -18,6 +19,7 @@ import ru.tsvetikov.warehouse.router.model.enums.WarehouseTaskStatus;
 import ru.tsvetikov.warehouse.router.service.WarehouseTaskService;
 
 import java.util.List;
+import java.util.Map;
 
 @Tag(name = "Warehouse Tasks", description = "Управление заданиями операторам")
 @RestController
@@ -39,12 +41,22 @@ public class WarehouseTaskController {
         return warehouseTaskService.getById(id);
     }
 
-    @Operation(summary = "Получить все задания")
+    @Operation(summary = "Получить все задания с фильтрацией по статусу и поиском")
     @GetMapping
-    public Page<WarehouseTaskResponse> getAll(@RequestParam(defaultValue = "1") @Min(1) Integer page,
-                                              @RequestParam(defaultValue = "10") @Min(1) @Max(100) Integer perPage,
-                                              @RequestParam(defaultValue = "createdAt") String sort,
-                                              @RequestParam(defaultValue = "DESC") Sort.Direction order) {
+    public Page<WarehouseTaskResponse> getAll(
+            @RequestParam(required = false) WarehouseTaskStatus status,
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "1") @Min(1) Integer page,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(100) Integer perPage,
+            @RequestParam(defaultValue = "createdAt") String sort,
+            @RequestParam(defaultValue = "DESC") Sort.Direction order
+    ) {
+        if (search != null && !search.isBlank()) {
+            return warehouseTaskService.search(search.trim(), page, perPage, sort, order);
+        }
+        if (status != null) {
+            return warehouseTaskService.getByStatus(status, page, perPage, sort, order);
+        }
         return warehouseTaskService.getAll(page, perPage, sort, order);
     }
 
@@ -67,6 +79,13 @@ public class WarehouseTaskController {
     public WarehouseTaskResponse assign(@PathVariable Long id,
                                         @RequestParam @NotBlank String username) {
         return warehouseTaskService.assignTask(id, username);
+    }
+
+    @Operation(summary = "Взять все доступные задания текущим пользователем")
+    @PostMapping("/take-all")
+    public Map<String, Integer> takeAll(Authentication authentication) {
+        int taken = warehouseTaskService.takeAllTasks(authentication.getName());
+        return Map.of("taken", taken);
     }
 
     @Operation(summary = "Начать выполнение задания")

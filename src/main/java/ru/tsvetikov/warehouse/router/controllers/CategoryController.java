@@ -1,4 +1,4 @@
-package ru.tsvetikov.warehouse.router.controllers.api;
+package ru.tsvetikov.warehouse.router.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ru.tsvetikov.warehouse.router.model.dto.request.CategoryRequest;
 import ru.tsvetikov.warehouse.router.model.dto.response.CategoryResponse;
@@ -34,26 +35,23 @@ public class CategoryController {
         return categoryService.getById(id);
     }
 
-    @Operation(summary = "Получить все категории с пагинацией")
+    @Operation(summary = "Получить все категории с пагинацией и поиском")
     @GetMapping
-    public Page<CategoryResponse> getAllCategories(@RequestParam(defaultValue = "1") @Min(1) Integer page,
-                                                   @RequestParam(defaultValue = "10") @Min(1) @Max(100) Integer perPage,
-                                                   @RequestParam(defaultValue = "name") String sort,
-                                                   @RequestParam(defaultValue = "ASC") Sort.Direction order) {
+    public Page<CategoryResponse> getAllCategories(
+            @RequestParam(defaultValue = "1") @Min(1) Integer page,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(100) Integer perPage,
+            @RequestParam(defaultValue = "name") String sort,
+            @RequestParam(defaultValue = "ASC") Sort.Direction order,
+            @RequestParam(required = false) String search
+    ) {
+        if (search != null && !search.isBlank()) {
+            return categoryService.search(search.trim(), page, perPage, sort, order);
+        }
         return categoryService.getAll(page, perPage, sort, order);
     }
 
-    @Operation(summary = "Поиск категорий по названию или описанию")
-    @GetMapping("/search")
-    public Page<CategoryResponse> searchCategories(@RequestParam String query,
-                                                   @RequestParam(defaultValue = "1") @Min(1) Integer page,
-                                                   @RequestParam(defaultValue = "10") @Min(1) @Max(100) Integer perPage,
-                                                   @RequestParam(defaultValue = "name") String sort,
-                                                   @RequestParam(defaultValue = "ASC") Sort.Direction order) {
-        return categoryService.search(query, page, perPage, sort, order);
-    }
-
     @Operation(summary = "Обновить категорию")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @PutMapping("/{id}")
     public CategoryResponse updateCategory(@PathVariable Long id, @RequestBody @Valid CategoryRequest request) {
         return categoryService.update(id, request);
@@ -61,12 +59,14 @@ public class CategoryController {
 
     @Operation(summary = "Удалить категорию")
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteCategory(@PathVariable Long id) {
         categoryService.delete(id);
     }
 
     @Operation(summary = "Восстановить категорию")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @PatchMapping("/{id}/activate")
     public CategoryResponse activate(@PathVariable Long id) {
         return categoryService.activate(id);

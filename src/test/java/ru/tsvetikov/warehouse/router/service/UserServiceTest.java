@@ -11,7 +11,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import ru.tsvetikov.warehouse.router.exception.CommonBackendException;
+import ru.tsvetikov.warehouse.router.exception.AppException;
 import ru.tsvetikov.warehouse.router.model.db.entity.User;
 import ru.tsvetikov.warehouse.router.model.db.repository.UserRepository;
 import ru.tsvetikov.warehouse.router.model.dto.request.ChangePasswordRequest;
@@ -72,7 +72,7 @@ class UserServiceTest {
         when(userRepository.existsByUsernameIgnoreCase("username")).thenReturn(true);
 
         assertThatThrownBy(() -> userService.create(request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("User with username '%s' already exists", "username");
 
         verifyNoInteractions(userMapper);
@@ -86,7 +86,7 @@ class UserServiceTest {
         UserCreateRequest request = UserTestData.createRequest(null);
 
         assertThatThrownBy(() -> userService.create(request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Username must not be blank");
 
         verifyNoInteractions(userMapper);
@@ -99,7 +99,7 @@ class UserServiceTest {
         UserCreateRequest request = UserTestData.createRequest("   ");
 
         assertThatThrownBy(() -> userService.create(request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Username must not be blank");
 
         verifyNoInteractions(userMapper);
@@ -129,7 +129,7 @@ class UserServiceTest {
         when(userRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> userService.getById(id))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("User with id: %s not found", id);
 
         verifyNoInteractions(userMapper);
@@ -231,7 +231,7 @@ class UserServiceTest {
         when(userRepository.findByUsername(username)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> userService.getUserEntityByUserName(username))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("User with username '%s' not found", username);
 
         verify(userRepository).findByUsername(username);
@@ -308,7 +308,7 @@ class UserServiceTest {
         when(userRepository.findById(id)).thenReturn(Optional.of(entity));
 
         assertThatThrownBy(() -> userService.update(id, request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Username must not be blank");
 
         verifyNoInteractions(userMapper);
@@ -325,7 +325,7 @@ class UserServiceTest {
         when(userRepository.existsByUsernameIgnoreCase("newusername")).thenReturn(true);
 
         assertThatThrownBy(() -> userService.update(id, request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("User with username '%s' already exists", "newusername");
 
         verify(userRepository).findById(id);
@@ -356,7 +356,7 @@ class UserServiceTest {
         when(userRepository.findById(id)).thenReturn(Optional.of(entity));
 
         assertThatThrownBy(() -> userService.delete(id))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("User is already deleted");
 
         verify(userRepository).findById(id);
@@ -370,7 +370,7 @@ class UserServiceTest {
         when(userRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> userService.delete(id))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("User with id: %s not found", id);
 
         verify(userRepository).findById(id);
@@ -400,7 +400,7 @@ class UserServiceTest {
         when(userRepository.findById(id)).thenReturn(Optional.of(entity));
 
         assertThatThrownBy(() -> userService.activate(id))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("User is already active");
 
         verify(userRepository).findById(id);
@@ -414,7 +414,7 @@ class UserServiceTest {
         when(userRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> userService.activate(id))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("User with id: %s not found", id);
 
         verify(userRepository).findById(id);
@@ -466,7 +466,7 @@ class UserServiceTest {
             mocked.when(SecurityContextHolder::getContext).thenReturn(securityContext);
 
             assertThatThrownBy(() -> userService.changePasswordForCurrentUser(request))
-                    .isInstanceOf(CommonBackendException.class)
+                    .isInstanceOf(AppException.class)
                     .hasMessageContaining("User not found");
 
             verify(userRepository).findByUsername("username");
@@ -504,7 +504,7 @@ class UserServiceTest {
         when(passwordEncoder.matches("oldPassword", "hash")).thenReturn(false);
 
         assertThatThrownBy(() -> userService.changePassword(id, request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Старый пароль неверен");
 
         verify(userRepository).findById(id);
@@ -520,7 +520,7 @@ class UserServiceTest {
         when(userRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> userService.changePassword(id, request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("User with id: %s not found", id);
 
         verify(userRepository).findById(id);
@@ -549,7 +549,7 @@ class UserServiceTest {
         when(userRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> userService.updateLocation(id, 10.0, 20.0))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("User with id: %s not found", id);
 
         verify(userRepository).findById(id);

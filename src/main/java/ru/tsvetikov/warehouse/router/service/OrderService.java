@@ -10,7 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.tsvetikov.warehouse.router.event.OrderProcessingStartedEvent;
-import ru.tsvetikov.warehouse.router.exception.CommonBackendException;
+import ru.tsvetikov.warehouse.router.exception.AppException;
 import ru.tsvetikov.warehouse.router.model.db.entity.Order;
 import ru.tsvetikov.warehouse.router.model.db.entity.OrderItem;
 import ru.tsvetikov.warehouse.router.model.db.repository.OrderRepository;
@@ -121,12 +121,12 @@ public class OrderService {
         Order order = findOrderByNumberOrThrow(orderNumber);
 
         if (order.getStatus() != OrderStatus.NEW) {
-            throw new CommonBackendException(
+            throw new AppException(
                     "Can only start processing NEW orders", HttpStatus.BAD_REQUEST);
         }
 
         if (order.getOrderItems().isEmpty()) {
-            throw new CommonBackendException(
+            throw new AppException(
                     "Cannot start processing empty order", HttpStatus.BAD_REQUEST);
         }
 
@@ -143,11 +143,11 @@ public class OrderService {
         Order order = findOrderByNumberOrThrow(orderNumber);
 
         if (order.getStatus() != OrderStatus.PROCESSING) {
-            throw new CommonBackendException("Can only complete PROCESSING orders", HttpStatus.BAD_REQUEST);
+            throw new AppException("Can only complete PROCESSING orders", HttpStatus.BAD_REQUEST);
         }
 
         if (order.getType() != OrderType.INBOUND) {
-            throw new CommonBackendException("This method is only for INBOUND orders", HttpStatus.BAD_REQUEST);
+            throw new AppException("This method is only for INBOUND orders", HttpStatus.BAD_REQUEST);
         }
 
         for (OrderItem item : order.getOrderItems()) {
@@ -171,7 +171,7 @@ public class OrderService {
         Order order = findOrderByNumberOrThrow(orderNumber);
 
         if (order.getStatus() != OrderStatus.PROCESSING) {
-            throw new CommonBackendException("Can only complete PROCESSING orders", HttpStatus.BAD_REQUEST);
+            throw new AppException("Can only complete PROCESSING orders", HttpStatus.BAD_REQUEST);
         }
 
         WarehouseTaskType requiredTaskType = getRequiredTaskType(order);
@@ -179,7 +179,7 @@ public class OrderService {
         boolean allTasksCompleted = warehouseTaskService.areAllTasksCompletedForOrder(orderNumber, requiredTaskType);
 
         if (!allTasksCompleted) {
-            throw new CommonBackendException(
+            throw new AppException(
                     String.format("Cannot complete order: not all %s tasks are completed", requiredTaskType),
                     HttpStatus.BAD_REQUEST);
         }
@@ -210,11 +210,11 @@ public class OrderService {
         Order order = findOrderByNumberOrThrow(orderNumber);
 
         if (order.getStatus() == OrderStatus.COMPLETED) {
-            throw new CommonBackendException("Cannot cancel COMPLETED order", HttpStatus.BAD_REQUEST);
+            throw new AppException("Cannot cancel COMPLETED order", HttpStatus.BAD_REQUEST);
         }
 
         if (order.getStatus() == OrderStatus.CANCELLED) {
-            throw new CommonBackendException("Order is already cancelled", HttpStatus.BAD_REQUEST);
+            throw new AppException("Order is already cancelled", HttpStatus.BAD_REQUEST);
         }
 
         if (order.getStatus() == OrderStatus.PROCESSING) {
@@ -251,26 +251,26 @@ public class OrderService {
             }
             attempts++;
         }
-        throw new CommonBackendException(
+        throw new AppException(
                 "Failed to generate unique order number after 3 attempts", HttpStatus.CONFLICT);
     }
 
     private Order findOrderByNumberOrThrow(String orderNumber) {
         return orderRepository.findByOrderNumber(orderNumber)
-                .orElseThrow(() -> new CommonBackendException(
+                .orElseThrow(() -> new AppException(
                         String.format("Order with number '%s' not found", orderNumber), HttpStatus.NOT_FOUND));
     }
 
     private void validateOrderCanBeUpdated(Order order) {
         if (order.getStatus() != OrderStatus.NEW) {
-            throw new CommonBackendException(
+            throw new AppException(
                     String.format("Cannot update order with status: %s", order.getStatus()), HttpStatus.BAD_REQUEST);
         }
     }
 
     private void validateOrderCanBeDeleted(Order order) {
         if (order.getStatus() != OrderStatus.NEW) {
-            throw new CommonBackendException(
+            throw new AppException(
                     String.format("Cannot delete order with status: %s", order.getStatus()),
                     HttpStatus.BAD_REQUEST);
         }

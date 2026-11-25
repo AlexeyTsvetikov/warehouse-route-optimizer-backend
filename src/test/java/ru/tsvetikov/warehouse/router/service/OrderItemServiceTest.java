@@ -9,7 +9,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import ru.tsvetikov.warehouse.router.event.OrderItemCompletedEvent;
-import ru.tsvetikov.warehouse.router.exception.CommonBackendException;
+import ru.tsvetikov.warehouse.router.exception.AppException;
 import ru.tsvetikov.warehouse.router.model.db.entity.Order;
 import ru.tsvetikov.warehouse.router.model.db.entity.OrderItem;
 import ru.tsvetikov.warehouse.router.model.db.entity.Product;
@@ -108,10 +108,10 @@ class OrderItemServiceTest {
         OrderItemRequest request = OrderItemTestData.request();
 
         when(orderQueryService.getOrderEntityByNumber(orderNumber))
-                .thenThrow(new CommonBackendException("Order with number 'ORD-00001' not found", HttpStatus.NOT_FOUND));
+                .thenThrow(new AppException("Order with number 'ORD-00001' not found", HttpStatus.NOT_FOUND));
 
         assertThatThrownBy(() -> orderItemService.create(orderNumber, request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Order with number '%s' not found", orderNumber);
 
         verifyNoInteractions(orderItemMapper);
@@ -130,7 +130,7 @@ class OrderItemServiceTest {
         when(orderQueryService.getOrderEntityByNumber(orderNumber)).thenReturn(order);
 
         assertThatThrownBy(() -> orderItemService.create(orderNumber, request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Cannot modify order with status: %s", order.getStatus());
 
         verifyNoInteractions(orderItemMapper);
@@ -152,7 +152,7 @@ class OrderItemServiceTest {
         when(orderItemRepository.existsByOrderIdAndProductId(order.getId(), product.getId())).thenReturn(true);
 
         assertThatThrownBy(() -> orderItemService.create(orderNumber, request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Product already exists in this order");
 
         verifyNoInteractions(orderItemMapper);
@@ -186,7 +186,7 @@ class OrderItemServiceTest {
         when(orderItemRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> orderItemService.getById(orderNumber, id))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Order item with id: %s not found", id);
 
         verifyNoInteractions(orderItemMapper);
@@ -203,7 +203,7 @@ class OrderItemServiceTest {
         when(orderItemRepository.findById(id)).thenReturn(Optional.of(entity));
 
         assertThatThrownBy(() -> orderItemService.getById(orderNumber, id))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Order item %d belongs to order '%s', not '%s'",
                         entity.getId(), entity.getOrder().getOrderNumber(), orderNumber);
 
@@ -240,11 +240,11 @@ class OrderItemServiceTest {
         String orderNumber = "ORD-00001";
 
         when(orderQueryService.getOrderEntityByNumber(orderNumber)).
-                thenThrow(new CommonBackendException("Order with number 'ORD-00001' not found", HttpStatus.NOT_FOUND));
+                thenThrow(new AppException("Order with number 'ORD-00001' not found", HttpStatus.NOT_FOUND));
 
         assertThatThrownBy(() -> orderItemService.getByOrder(orderNumber, 0, 10,
                 "priority", Sort.Direction.ASC))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Order with number '%s' not found", orderNumber);
 
         verifyNoInteractions(orderItemMapper);
@@ -275,10 +275,10 @@ class OrderItemServiceTest {
         String orderNumber = "ORD-00001";
 
         when(orderQueryService.getOrderEntityByNumber(orderNumber)).
-                thenThrow(new CommonBackendException("Order with number 'ORD-00001' not found", HttpStatus.NOT_FOUND));
+                thenThrow(new AppException("Order with number 'ORD-00001' not found", HttpStatus.NOT_FOUND));
 
         assertThatThrownBy(() -> orderItemService.getByOrderForWeb(orderNumber))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Order with number '%s' not found", orderNumber);
 
         verifyNoInteractions(orderItemMapper);
@@ -319,7 +319,7 @@ class OrderItemServiceTest {
         when(orderItemRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> orderItemService.update(orderNumber, id, request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Order item with id: %s not found", id);
 
         verify(orderItemRepository).findById(id);
@@ -341,7 +341,7 @@ class OrderItemServiceTest {
         when(orderQueryService.getOrderEntityByNumber(orderNumber)).thenReturn(order);
 
         assertThatThrownBy(() -> orderItemService.update(orderNumber, id, request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Order item %d belongs to order '%s', not '%s'",
                         entity.getId(), entity.getOrder().getOrderNumber(), orderNumber);
 
@@ -365,7 +365,7 @@ class OrderItemServiceTest {
         when(orderQueryService.getOrderEntityByNumber(orderNumber)).thenReturn(order);
 
         assertThatThrownBy(() -> orderItemService.update(orderNumber, id, request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Cannot modify order with status: %s", order.getStatus());
 
         verify(orderItemRepository).findById(id);
@@ -518,7 +518,7 @@ class OrderItemServiceTest {
         when(orderQueryService.getOrderEntityByNumber(orderNumber)).thenReturn(order);
 
         assertThatThrownBy(() -> orderItemService.update(orderNumber, id, request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Quantity must be positive");
 
         verify(orderItemRepository).findById(id);
@@ -538,11 +538,11 @@ class OrderItemServiceTest {
 
         when(orderItemRepository.findById(id)).thenReturn(Optional.of(entity));
         when(orderQueryService.getOrderEntityByNumber(orderNumber)).thenReturn(order);
-        when(productService.getBySku(request.productSku())).thenThrow(new CommonBackendException
+        when(productService.getBySku(request.productSku())).thenThrow(new AppException
                 (String.format("Product with SKU '%s' not found", request.productSku()), HttpStatus.NOT_FOUND));
 
         assertThatThrownBy(() -> orderItemService.update(orderNumber, id, request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Product with SKU '%s' not found", request.productSku());
 
         verify(orderItemRepository).findById(id);
@@ -568,7 +568,7 @@ class OrderItemServiceTest {
         when(orderItemRepository.existsByOrderIdAndProductId(order.getId(), product.getId())).thenReturn(true);
 
         assertThatThrownBy(() -> orderItemService.update(orderNumber, id, request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Product already exists in this order");
 
         verify(orderItemRepository).findById(id);
@@ -602,7 +602,7 @@ class OrderItemServiceTest {
         when(orderItemRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> orderItemService.delete(orderNumber, id))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Order item with id: %s not found", id);
 
         verify(orderItemRepository).findById(id);
@@ -619,7 +619,7 @@ class OrderItemServiceTest {
         when(orderItemRepository.findById(id)).thenReturn(Optional.of(entity));
 
         assertThatThrownBy(() -> orderItemService.delete(orderNumber, id))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Order item %d belongs to order '%s', not '%s'",
                         entity.getId(), entity.getOrder().getOrderNumber(), orderNumber);
 
@@ -637,7 +637,7 @@ class OrderItemServiceTest {
         when(orderItemRepository.findById(id)).thenReturn(Optional.of(entity));
 
         assertThatThrownBy(() -> orderItemService.delete(orderNumber, id))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Cannot modify order with status: %s", order.getStatus());
 
         verify(orderItemRepository).findById(id);
@@ -675,7 +675,7 @@ class OrderItemServiceTest {
         when(orderItemRepository.findByOrderAndProduct(order, product)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> orderItemService.addCollectedQuantity(order, product, quantityToAdd))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("OrderItem not found for order " + order.getOrderNumber() +
                                       " and product " + product.getSku());
 
@@ -696,7 +696,7 @@ class OrderItemServiceTest {
         when(orderItemRepository.findById(orderItem.getId())).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> orderItemService.addCollectedQuantity(order, product, quantityToAdd))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Order item with id: %s not found", orderItem.getId());
 
         verifyNoInteractions(eventPublisher);
@@ -728,7 +728,7 @@ class OrderItemServiceTest {
         when(orderItemRepository.findByOrderAndProduct(order, product)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> orderItemService.getRemainingQuantity(order, product))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("OrderItem not found");
 
         verify(orderItemRepository).findByOrderAndProduct(order, product);
@@ -785,7 +785,7 @@ class OrderItemServiceTest {
         when(orderItemRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> orderItemService.setCollectedQuantity(orderNumber, id, collectedQuantity))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Order item with id: %s not found", id);
 
         verifyNoInteractions(eventPublisher);
@@ -805,7 +805,7 @@ class OrderItemServiceTest {
         when(orderItemRepository.findById(id)).thenReturn(Optional.of(entity));
 
         assertThatThrownBy(() -> orderItemService.setCollectedQuantity(orderNumber, id, collectedQuantity))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Order item %d belongs to order '%s', not '%s'",
                         id, entity.getOrder().getOrderNumber(), orderNumber);
 
@@ -825,7 +825,7 @@ class OrderItemServiceTest {
         when(orderItemRepository.findById(id)).thenReturn(Optional.of(entity));
 
         assertThatThrownBy(() -> orderItemService.setCollectedQuantity(orderNumber, id, collectedQuantity))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Collected quantity cannot be negative");
 
         verifyNoInteractions(eventPublisher);
@@ -844,7 +844,7 @@ class OrderItemServiceTest {
         when(orderItemRepository.findById(id)).thenReturn(Optional.of(entity));
 
         assertThatThrownBy(() -> orderItemService.setCollectedQuantity(orderNumber, id, collectedQuantity))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Collected quantity cannot exceed ordered quantity");
 
         verifyNoInteractions(eventPublisher);
@@ -862,7 +862,7 @@ class OrderItemServiceTest {
         when(orderItemRepository.findById(id)).thenReturn(Optional.of(entity));
 
         assertThatThrownBy(() -> orderItemService.setCollectedQuantity(orderNumber, id, null))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Collected quantity must not be null");
 
         verifyNoInteractions(eventPublisher);

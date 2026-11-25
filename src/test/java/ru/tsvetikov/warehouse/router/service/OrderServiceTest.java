@@ -8,7 +8,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.*;
 import ru.tsvetikov.warehouse.router.event.OrderProcessingStartedEvent;
-import ru.tsvetikov.warehouse.router.exception.CommonBackendException;
+import ru.tsvetikov.warehouse.router.exception.AppException;
 import ru.tsvetikov.warehouse.router.model.db.entity.Order;
 import ru.tsvetikov.warehouse.router.model.db.repository.OrderRepository;
 import ru.tsvetikov.warehouse.router.model.dto.request.OrderItemRequest;
@@ -82,7 +82,7 @@ class OrderServiceTest {
         when(orderRepository.existsByOrderNumber("ORD-00001")).thenReturn(true);
 
         assertThatThrownBy(() -> orderService.createEmptyOrder(request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Failed to generate unique order number after 3 attempts");
 
         verify(orderRepository, times(3)).existsByOrderNumber("ORD-00001");
@@ -166,7 +166,7 @@ class OrderServiceTest {
         when(orderRepository.existsByOrderNumber("ORD-00001")).thenReturn(true);
 
         assertThatThrownBy(() -> orderService.createOrderWithItems(request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Failed to generate unique order number after 3 attempts");
 
         verifyNoInteractions(orderMapper);
@@ -199,7 +199,7 @@ class OrderServiceTest {
         when(orderRepository.findByOrderNumber(orderNumber)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> orderService.getByNumber(orderNumber))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Order with number '%s' not found", orderNumber);
 
         verifyNoInteractions(orderMapper);
@@ -296,7 +296,7 @@ class OrderServiceTest {
         when(orderRepository.findByOrderNumber(orderNumber)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> orderService.update(orderNumber, request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Order with number '%s' not found", orderNumber);
 
         verify(orderRepository).findByOrderNumber(orderNumber);
@@ -313,7 +313,7 @@ class OrderServiceTest {
         when(orderRepository.findByOrderNumber(orderNumber)).thenReturn(Optional.of(entity));
 
         assertThatThrownBy(() -> orderService.update(orderNumber, request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Cannot update order with status: %s", entity.getStatus());
 
         verify(orderRepository).findByOrderNumber(orderNumber);
@@ -341,7 +341,7 @@ class OrderServiceTest {
         when(orderRepository.findByOrderNumber(orderNumber)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> orderService.delete(orderNumber))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Order with number '%s' not found", orderNumber);
 
         verify(orderRepository).findByOrderNumber(orderNumber);
@@ -356,7 +356,7 @@ class OrderServiceTest {
         when(orderRepository.findByOrderNumber(orderNumber)).thenReturn(Optional.of(entity));
 
         assertThatThrownBy(() -> orderService.delete(orderNumber))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Cannot delete order with status: %s", entity.getStatus());
 
         verify(orderRepository).findByOrderNumber(orderNumber);
@@ -389,7 +389,7 @@ class OrderServiceTest {
         when(orderRepository.findByOrderNumber(orderNumber)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> orderService.startProcessing(orderNumber))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Order with number '%s' not found", orderNumber);
 
         verify(orderRepository).findByOrderNumber(orderNumber);
@@ -406,7 +406,7 @@ class OrderServiceTest {
         when(orderRepository.findByOrderNumber(orderNumber)).thenReturn(Optional.of(entity));
 
         assertThatThrownBy(() -> orderService.startProcessing(orderNumber))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Cannot start processing empty order");
 
         verify(orderRepository).findByOrderNumber(orderNumber);
@@ -424,7 +424,7 @@ class OrderServiceTest {
         when(orderRepository.findByOrderNumber(orderNumber)).thenReturn(Optional.of(entity));
 
         assertThatThrownBy(() -> orderService.startProcessing(orderNumber))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Can only start processing NEW orders");
 
         verify(orderRepository).findByOrderNumber(orderNumber);
@@ -476,7 +476,7 @@ class OrderServiceTest {
         when(orderRepository.findByOrderNumber(orderNumber)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> orderService.completeInboundOrder(orderNumber))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Order with number '%s' not found", orderNumber);
 
         verify(orderRepository).findByOrderNumber(orderNumber);
@@ -493,7 +493,7 @@ class OrderServiceTest {
         when(orderRepository.findByOrderNumber(orderNumber)).thenReturn(Optional.of(entity));
 
         assertThatThrownBy(() -> orderService.completeInboundOrder(orderNumber))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Can only complete PROCESSING orders");
 
         verify(orderRepository).findByOrderNumber(orderNumber);
@@ -510,7 +510,7 @@ class OrderServiceTest {
         when(orderRepository.findByOrderNumber(orderNumber)).thenReturn(Optional.of(entity));
 
         assertThatThrownBy(() -> orderService.completeInboundOrder(orderNumber))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("This method is only for INBOUND orders");
 
         verify(orderRepository).findByOrderNumber(orderNumber);
@@ -546,7 +546,7 @@ class OrderServiceTest {
         when(orderRepository.findByOrderNumber(orderNumber)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> orderService.completeOrder(orderNumber))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Order with number '%s' not found", orderNumber);
 
         verify(orderRepository).findByOrderNumber(orderNumber);
@@ -565,7 +565,7 @@ class OrderServiceTest {
         when(orderRepository.findByOrderNumber(orderNumber)).thenReturn(Optional.of(entity));
 
         assertThatThrownBy(() -> orderService.completeOrder(orderNumber))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Can only complete PROCESSING orders");
 
         verify(orderRepository).findByOrderNumber(orderNumber);
@@ -585,7 +585,7 @@ class OrderServiceTest {
         when(warehouseTaskService.areAllTasksCompletedForOrder(orderNumber, WarehouseTaskType.RECEIVING)).thenReturn(false);
 
         assertThatThrownBy(() -> orderService.completeOrder(orderNumber))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Cannot complete order: not all %s tasks are completed", WarehouseTaskType.RECEIVING);
 
         verify(orderRepository).findByOrderNumber(orderNumber);
@@ -665,7 +665,7 @@ class OrderServiceTest {
         when(orderRepository.findByOrderNumber(orderNumber)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> orderService.cancelOrder(orderNumber))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Order with number '%s' not found", orderNumber);
 
         verify(orderRepository).findByOrderNumber(orderNumber);
@@ -684,7 +684,7 @@ class OrderServiceTest {
         when(orderRepository.findByOrderNumber(orderNumber)).thenReturn(Optional.of(entity));
 
         assertThatThrownBy(() -> orderService.cancelOrder(orderNumber))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Cannot cancel COMPLETED order");
 
         verify(orderRepository).findByOrderNumber(orderNumber);
@@ -703,7 +703,7 @@ class OrderServiceTest {
         when(orderRepository.findByOrderNumber(orderNumber)).thenReturn(Optional.of(entity));
 
         assertThatThrownBy(() -> orderService.cancelOrder(orderNumber))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Order is already cancelled");
 
         verify(orderRepository).findByOrderNumber(orderNumber);
