@@ -8,7 +8,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.tsvetikov.warehouse.router.exception.CommonBackendException;
+import ru.tsvetikov.warehouse.router.exception.AppException;
 import ru.tsvetikov.warehouse.router.model.db.entity.Category;
 import ru.tsvetikov.warehouse.router.model.db.repository.CategoryRepository;
 import ru.tsvetikov.warehouse.router.model.dto.request.CategoryRequest;
@@ -60,7 +60,7 @@ public class CategoryService {
     @Transactional(readOnly = true)
     public Category getCategoryEntityByCategoryName(String categoryName) {
         return categoryRepository.findByNameIgnoreCase(categoryName)
-                .orElseThrow(() -> new CommonBackendException(
+                .orElseThrow(() -> new AppException(
                         String.format("Category with name '%s' not found", categoryName), HttpStatus.NOT_FOUND));
     }
 
@@ -85,7 +85,7 @@ public class CategoryService {
         Category category = findCategoryOrThrow(id);
 
         if (!category.getIsActive()) {
-            throw new CommonBackendException("Category is already deleted", HttpStatus.CONFLICT);
+            throw new AppException("Category is already deleted", HttpStatus.CONFLICT);
         }
 
         category.setIsActive(false);
@@ -97,7 +97,7 @@ public class CategoryService {
         Category category = findCategoryOrThrow(id);
 
         if (category.getIsActive()) {
-            throw new CommonBackendException("Category is already active", HttpStatus.CONFLICT);
+            throw new AppException("Category is already active", HttpStatus.CONFLICT);
         }
 
         category.setIsActive(true);
@@ -107,20 +107,20 @@ public class CategoryService {
 
     private Category findCategoryOrThrow(Long id) {
         return categoryRepository.findById(id)
-                .orElseThrow(() -> new CommonBackendException(
+                .orElseThrow(() -> new AppException(
                         String.format("Category with id: %s not found", id), HttpStatus.NOT_FOUND));
     }
 
     private String formatName(String name) {
         if (name == null || name.isBlank()) {
-            throw new CommonBackendException("Name must not be blank", HttpStatus.BAD_REQUEST);
+            throw new AppException("Name must not be blank", HttpStatus.BAD_REQUEST);
         }
         return name.substring(0, 1).toUpperCase() + name.substring(1).toLowerCase();
     }
 
     private void checkNameUniqueness(String name) {
         if (categoryRepository.existsByNameIgnoreCase(name)) {
-            throw new CommonBackendException("Category with name already exists", HttpStatus.CONFLICT);
+            throw new AppException("Category with name already exists", HttpStatus.CONFLICT);
         }
     }
 }

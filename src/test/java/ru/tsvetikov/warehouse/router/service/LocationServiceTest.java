@@ -6,10 +6,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.*;
-import ru.tsvetikov.warehouse.router.exception.CommonBackendException;
+import ru.tsvetikov.warehouse.router.exception.AppException;
 import ru.tsvetikov.warehouse.router.model.db.entity.Location;
 import ru.tsvetikov.warehouse.router.model.db.repository.LocationRepository;
-import ru.tsvetikov.warehouse.router.model.dto.form.LocationForm;
 import ru.tsvetikov.warehouse.router.model.dto.request.LocationRequest;
 import ru.tsvetikov.warehouse.router.model.dto.response.LocationResponse;
 import ru.tsvetikov.warehouse.router.model.enums.LocationType;
@@ -63,7 +62,7 @@ class LocationServiceTest {
         when(locationRepository.existsByCodeIgnoreCase("RECV-01")).thenReturn(true);
 
         assertThatThrownBy(() -> locationService.create(request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Location with code already exists");
 
         verify(locationRepository).existsByCodeIgnoreCase("RECV-01");
@@ -76,7 +75,7 @@ class LocationServiceTest {
         LocationRequest request = LocationTestData.request(null);
 
         assertThatThrownBy(() -> locationService.create(request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Code must not be blank");
 
         verifyNoInteractions(locationMapper);
@@ -88,7 +87,7 @@ class LocationServiceTest {
         LocationRequest request = LocationTestData.request("   ");
 
         assertThatThrownBy(() -> locationService.create(request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Code must not be blank");
 
         verifyNoInteractions(locationMapper);
@@ -116,7 +115,7 @@ class LocationServiceTest {
         when(locationRepository.findByCodeIgnoreCase(code)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> locationService.getByCode(code))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Location with code '%s' not found", code);
 
         verify(locationRepository).findByCodeIgnoreCase("recv-01");
@@ -125,7 +124,7 @@ class LocationServiceTest {
     @Test
     void shouldThrowWhenLocationCodeIsNull() {
         assertThatThrownBy(() -> locationService.getByCode(null))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Code must not be blank");
 
         verifyNoInteractions(locationRepository);
@@ -134,7 +133,7 @@ class LocationServiceTest {
     @Test
     void shouldThrowWhenLocationCodeIsBlank() {
         assertThatThrownBy(() -> locationService.getByCode("   "))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Code must not be blank");
 
         verifyNoInteractions(locationRepository);
@@ -165,7 +164,7 @@ class LocationServiceTest {
         when(locationRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> locationService.getById(id))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Location with id: %s not found", id);
 
         verifyNoInteractions(locationMapper);
@@ -246,61 +245,7 @@ class LocationServiceTest {
         when(locationRepository.existsByCodeIgnoreCase("RECV-02")).thenReturn(true);
 
         assertThatThrownBy(() -> locationService.update(id, request))
-                .isInstanceOf(CommonBackendException.class)
-                .hasMessageContaining("Location with code already exists");
-
-        verify(locationRepository).findById(id);
-        verify(locationRepository).existsByCodeIgnoreCase("RECV-02");
-        verify(locationRepository, never()).save(any());
-        verifyNoInteractions(locationMapper);
-    }
-
-
-    @Test
-    void shouldUpdateLocationWithoutChangingCodeFromWeb() {
-        Long id = 1L;
-        LocationForm form = LocationTestData.form("recv-01");
-        Location entity = LocationTestData.entityBuilder().id(1L).code("RECV-01").build();
-
-        when(locationRepository.findById(id)).thenReturn(Optional.of(entity));
-        when(locationRepository.save(entity)).thenReturn(entity);
-
-        locationService.updateFromWeb(id, form);
-
-        verify(locationRepository, never()).existsByCodeIgnoreCase(any());
-        verify(locationMapper).updateEntityFromForm(form, entity);
-        verify(locationRepository).save(entity);
-    }
-
-    @Test
-    void shouldUpdateLocationWithChangingCodeFromWeb() {
-        Long id = 1L;
-        LocationForm form = LocationTestData.form("recv-02");
-        Location entity = LocationTestData.entityBuilder().id(1L).code("RECV-01").build();
-
-        when(locationRepository.findById(id)).thenReturn(Optional.of(entity));
-        when(locationRepository.existsByCodeIgnoreCase("RECV-02")).thenReturn(false);
-        when(locationRepository.save(entity)).thenReturn(entity);
-
-        locationService.updateFromWeb(id, form);
-
-        assertThat(entity.getCode()).isEqualTo("RECV-02");
-        verify(locationRepository).existsByCodeIgnoreCase("RECV-02");
-        verify(locationMapper).updateEntityFromForm(form, entity);
-        verify(locationRepository).save(entity);
-    }
-
-    @Test
-    void shouldThrowWhenLocationCodeExistsOnUpdateFromWeb() {
-        Long id = 1L;
-        LocationForm form = LocationTestData.form("recv-02");
-        Location entity = LocationTestData.entityBuilder().id(1L).code("RECV-01").build();
-
-        when(locationRepository.findById(id)).thenReturn(Optional.of(entity));
-        when(locationRepository.existsByCodeIgnoreCase("RECV-02")).thenReturn(true);
-
-        assertThatThrownBy(() -> locationService.updateFromWeb(id, form))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Location with code already exists");
 
         verify(locationRepository).findById(id);
@@ -374,7 +319,7 @@ class LocationServiceTest {
         when(locationRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> locationService.delete(id))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Location with id: %s not found", id);
 
         verify(locationRepository).findById(id);
@@ -389,7 +334,7 @@ class LocationServiceTest {
         when(locationRepository.findById(id)).thenReturn(Optional.of(entity));
 
         assertThatThrownBy(() -> locationService.delete(id))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Location is already deleted");
 
         verify(locationRepository).findById(id);
@@ -423,7 +368,7 @@ class LocationServiceTest {
         when(locationRepository.findById(id)).thenReturn(Optional.of(entity));
 
         assertThatThrownBy(() -> locationService.activate(id))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Location is already active");
 
         verifyNoInteractions(locationMapper);
@@ -439,7 +384,7 @@ class LocationServiceTest {
         when(locationRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> locationService.activate(id))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Location with id: %s not found", id);
 
         verifyNoInteractions(locationMapper);

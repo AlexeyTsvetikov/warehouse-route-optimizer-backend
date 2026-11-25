@@ -11,7 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import ru.tsvetikov.warehouse.router.exception.CommonBackendException;
+import ru.tsvetikov.warehouse.router.exception.AppException;
 import ru.tsvetikov.warehouse.router.model.db.entity.Location;
 import ru.tsvetikov.warehouse.router.model.db.entity.Product;
 import ru.tsvetikov.warehouse.router.model.db.entity.Stock;
@@ -127,7 +127,7 @@ class StockServiceTest {
         Integer quantity = null;
 
         assertThatThrownBy(() -> stockService.increaseStock(productSku, locationCode, quantity))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Quantity must be positive, got: %s", quantity);
 
         verifyNoInteractions(productService);
@@ -142,7 +142,7 @@ class StockServiceTest {
         Integer quantity = -10;
 
         assertThatThrownBy(() -> stockService.increaseStock(productSku, locationCode, quantity))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Quantity must be positive, got: %s", quantity);
 
         verifyNoInteractions(productService);
@@ -194,7 +194,7 @@ class StockServiceTest {
                 .thenThrow(new DataIntegrityViolationException("unique constraint"));
 
         assertThatThrownBy(() -> stockService.increaseStock(productSku, locationCode, quantity))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Concurrent stock operation failed. Please retry.");
 
         verify(productService).getBySku(productSku);
@@ -284,7 +284,7 @@ class StockServiceTest {
         when(stockRepository.findByProductAndLocationWithLock(product, location)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> stockService.decreaseStock(productSku, locationCode, quantity))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Stock not found for product %s at location %s", productSku, locationCode);
 
         verify(productService).getBySku(productSku);
@@ -298,7 +298,7 @@ class StockServiceTest {
         Integer quantity = null;
 
         assertThatThrownBy(() -> stockService.decreaseStock(productSku, locationCode, quantity))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Quantity must be positive, got: %s", quantity);
 
         verifyNoInteractions(productService);
@@ -313,7 +313,7 @@ class StockServiceTest {
         Integer quantity = -10;
 
         assertThatThrownBy(() -> stockService.decreaseStock(productSku, locationCode, quantity))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Quantity must be positive, got: %s", quantity);
 
         verifyNoInteractions(productService);
@@ -335,7 +335,7 @@ class StockServiceTest {
         when(stockRepository.findByProductAndLocationWithLock(product, location)).thenReturn(Optional.of(stock));
 
         assertThatThrownBy(() -> stockService.decreaseStock(productSku, locationCode, quantity))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Not enough available stock.");
 
         verify(productService).getBySku(productSku);
@@ -392,7 +392,7 @@ class StockServiceTest {
 
 
         assertThatThrownBy(() -> stockService.transferStock(productSku, quantity, fromLocationCode, toLocationCode))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Not enough available stock in %s. Available: %d, Requested: %d",
                         fromLocationCode, stockA.getQuantity() - stockA.getReservedQuantity(), quantity);
 
@@ -410,7 +410,7 @@ class StockServiceTest {
         Integer quantity = 100;
 
         assertThatThrownBy(() -> stockService.transferStock(productSku, quantity, fromLocationCode, fromLocationCode))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Source and destination locations cannot be same: %s", fromLocationCode);
 
         verifyNoInteractions(productService);
@@ -463,7 +463,7 @@ class StockServiceTest {
         when(stockRepository.findByProductAndLocationWithLock(product, locA)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> stockService.transferStock(productSku, quantity, fromLocationCode, toLocationCode))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Stock not found at location %s", fromLocationCode);
 
         verify(productService).getBySku(productSku);
@@ -564,7 +564,7 @@ class StockServiceTest {
         when(stockRepository.sumAvailableQuantityByProductId(product.getId())).thenReturn(totalAvailable);
 
         assertThatThrownBy(() -> stockService.reserveStockNearest(productSku, quantity, fromX, fromY))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Not enough available stock for product %s. Required: %d, Available: %d",
                         productSku, quantity, totalAvailable);
 
@@ -631,7 +631,7 @@ class StockServiceTest {
                 .thenReturn(List.of(stock1));
 
         assertThatThrownBy(() -> stockService.reserveStockNearest(productSku, quantity, fromX, fromY))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Inconsistent state: failed to reserve full quantity");
 
         assertThat(stock1.getReservedQuantity()).isEqualTo(30);
@@ -645,7 +645,7 @@ class StockServiceTest {
         String productSku = "BRP-ENG-001";
 
         assertThatThrownBy(() -> stockService.checkAvailability(productSku, null))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Quantity must be positive");
 
         verifyNoInteractions(productService);
@@ -658,7 +658,7 @@ class StockServiceTest {
         Integer requiredQuantity = -10;
 
         assertThatThrownBy(() -> stockService.checkAvailability(productSku, requiredQuantity))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Quantity must be positive");
 
         verifyNoInteractions(productService);
@@ -690,7 +690,7 @@ class StockServiceTest {
         when(stockRepository.sumAvailableQuantityByProductId(product.getId())).thenReturn(50);
 
         assertThatThrownBy(() -> stockService.checkAvailability(productSku, requiredQuantity))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Not enough available stock");
     }
 
@@ -726,7 +726,7 @@ class StockServiceTest {
         when(stockRepository.findReservedByProductIdFifoWithLock(product.getId())).thenReturn(List.of(stock1, stock2));
 
         assertThatThrownBy(() -> stockService.releaseReserved(productSku, quantity))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Not enough reserved stock to release for product %s. Available reserved: %d, Requested: %d",
                         productSku, totalReserved, quantity);
 

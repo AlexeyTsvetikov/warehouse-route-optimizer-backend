@@ -7,7 +7,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
-import ru.tsvetikov.warehouse.router.exception.CommonBackendException;
+import ru.tsvetikov.warehouse.router.exception.AppException;
 import ru.tsvetikov.warehouse.router.model.db.entity.Category;
 import ru.tsvetikov.warehouse.router.model.db.entity.Product;
 import ru.tsvetikov.warehouse.router.model.db.repository.ProductRepository;
@@ -58,7 +58,7 @@ class ProductServiceTest {
         when(productRepository.findBySkuIgnoreCase(sku)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> productService.getBySku(sku))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Product with SKU '%s' not found", sku);
 
         verify(productRepository).findBySkuIgnoreCase("BRP-ENG-002");
@@ -67,7 +67,7 @@ class ProductServiceTest {
     @Test
     void shouldThrowWhenProductSkuIsNull() {
         assertThatThrownBy(() -> productService.getBySku(null))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Sku must not be blank");
 
         verifyNoInteractions(productRepository);
@@ -76,7 +76,7 @@ class ProductServiceTest {
     @Test
     void shouldThrowWhenProductSkuIsBlank() {
         assertThatThrownBy(() -> productService.getBySku("   "))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Sku must not be blank");
 
         verifyNoInteractions(productRepository);
@@ -109,7 +109,7 @@ class ProductServiceTest {
         ProductRequest request = ProductTestData.request("   ");
 
         assertThatThrownBy(() -> productService.create(request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Sku must not be blank");
 
         verifyNoInteractions(productMapper);
@@ -122,7 +122,7 @@ class ProductServiceTest {
         ProductRequest request = ProductTestData.request(null);
 
         assertThatThrownBy(() -> productService.create(request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Sku must not be blank");
 
         verifyNoInteractions(productMapper);
@@ -137,7 +137,7 @@ class ProductServiceTest {
         when(productRepository.existsBySkuIgnoreCase("BRP-ENG-001")).thenReturn(true);
 
         assertThatThrownBy(() -> productService.create(request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Product with SKU '%s' already exists", "BRP-ENG-001");
 
         verify(productRepository).existsBySkuIgnoreCase("BRP-ENG-001");
@@ -170,7 +170,7 @@ class ProductServiceTest {
         when(productRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> productService.getById(id))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Product with id: %s not found", id);
 
         verify(productRepository).findById(id);
@@ -324,7 +324,7 @@ class ProductServiceTest {
         when(productRepository.existsBySkuIgnoreCase("BRP-ENG-002")).thenReturn(true);
 
         assertThatThrownBy(() -> productService.update(id, request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Product with SKU '%s' already exists", "BRP-ENG-002");
 
         verify(productRepository).findById(id);
@@ -346,11 +346,11 @@ class ProductServiceTest {
         Product entity = ProductTestData.entityBuilder().id(1L).build();
 
         when(productRepository.findById(id)).thenReturn(Optional.of(entity));
-        when(categoryService.getCategoryEntityByCategoryName("Новая категория")).thenThrow(new CommonBackendException(
+        when(categoryService.getCategoryEntityByCategoryName("Новая категория")).thenThrow(new AppException(
                 "Category with name 'Новая категория' not found", HttpStatus.NOT_FOUND));
 
         assertThatThrownBy(() -> productService.update(id, request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Category with name 'Новая категория' not found");
 
         verify(productRepository).findById(id);
@@ -466,7 +466,7 @@ class ProductServiceTest {
         when(productRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> productService.delete(id))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Product with id: %s not found", id);
 
         verify(productRepository).findById(id);
@@ -481,7 +481,7 @@ class ProductServiceTest {
         when(productRepository.findById(id)).thenReturn(Optional.of(entity));
 
         assertThatThrownBy(() -> productService.delete(id))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Product is already deleted");
 
         verify(productRepository).findById(id);
@@ -514,7 +514,7 @@ class ProductServiceTest {
         when(productRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> productService.activate(id))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Product with id: %s not found", id);
 
         verify(productRepository).findById(id);
@@ -529,7 +529,7 @@ class ProductServiceTest {
         when(productRepository.findById(id)).thenReturn(Optional.of(entity));
 
         assertThatThrownBy(() -> productService.activate(id))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Product is already active");
 
         verify(productRepository).findById(id);

@@ -5,7 +5,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import ru.tsvetikov.warehouse.router.exception.CommonBackendException;
+import ru.tsvetikov.warehouse.router.exception.AppException;
 import ru.tsvetikov.warehouse.router.model.db.entity.WarehouseTask;
 import ru.tsvetikov.warehouse.router.model.db.repository.WarehouseTaskRepository;
 import ru.tsvetikov.warehouse.router.testdata.WarehouseTaskTestData;
@@ -75,7 +75,7 @@ class TaskCompletionServiceTest {
         when(warehouseTaskRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> taskCompletionService.finalizeTask(id, 10))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Task with id: %s not found", id);
 
         verifyNoInteractions(orderItemService);

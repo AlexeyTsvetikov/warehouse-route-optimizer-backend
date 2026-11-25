@@ -8,10 +8,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.tsvetikov.warehouse.router.exception.CommonBackendException;
+import ru.tsvetikov.warehouse.router.exception.AppException;
 import ru.tsvetikov.warehouse.router.model.db.entity.Location;
 import ru.tsvetikov.warehouse.router.model.db.repository.LocationRepository;
-import ru.tsvetikov.warehouse.router.model.dto.form.LocationForm;
 import ru.tsvetikov.warehouse.router.model.dto.request.LocationRequest;
 import ru.tsvetikov.warehouse.router.model.dto.response.LocationResponse;
 import ru.tsvetikov.warehouse.router.model.enums.LocationType;
@@ -31,7 +30,7 @@ public class LocationService {
     public Location getByCode(String code) {
         validateCode(code);
         return locationRepository.findByCodeIgnoreCase(code)
-                .orElseThrow(() -> new CommonBackendException(
+                .orElseThrow(() -> new AppException(
                         String.format("Location with code '%s' not found", code), HttpStatus.NOT_FOUND));
     }
 
@@ -84,25 +83,11 @@ public class LocationService {
     }
 
     @Transactional
-    public void updateFromWeb(Long id, LocationForm form) {
-        Location location = findLocationOrThrow(id);
-
-        String formattedCode = formatCode(form.getCode());
-        if (!formattedCode.equals(location.getCode())) {
-            checkCodeUniqueness(formattedCode);
-            location.setCode(formattedCode);
-        }
-
-        locationMapper.updateEntityFromForm(form, location);
-        locationRepository.save(location);
-    }
-
-    @Transactional
     public void delete(Long id) {
         Location location = findLocationOrThrow(id);
 
         if (!location.getIsActive()) {
-            throw new CommonBackendException("Location is already deleted", HttpStatus.CONFLICT);
+            throw new AppException("Location is already deleted", HttpStatus.CONFLICT);
         }
         location.setIsActive(false);
         locationRepository.save(location);
@@ -113,7 +98,7 @@ public class LocationService {
         Location location = findLocationOrThrow(id);
 
         if (location.getIsActive()) {
-            throw new CommonBackendException("Location is already active", HttpStatus.CONFLICT);
+            throw new AppException("Location is already active", HttpStatus.CONFLICT);
         }
         location.setIsActive(true);
         locationRepository.save(location);
@@ -127,13 +112,13 @@ public class LocationService {
 
     private Location findLocationOrThrow(Long id) {
         return locationRepository.findById(id)
-                .orElseThrow(() -> new CommonBackendException(
+                .orElseThrow(() -> new AppException(
                         String.format("Location with id: %s not found", id), HttpStatus.NOT_FOUND));
     }
 
     private void validateCode(String code) {
         if (code == null || code.isBlank()) {
-            throw new CommonBackendException("Code must not be blank", HttpStatus.BAD_REQUEST);
+            throw new AppException("Code must not be blank", HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -144,7 +129,7 @@ public class LocationService {
 
     private void checkCodeUniqueness(String code) {
         if (locationRepository.existsByCodeIgnoreCase(code)) {
-            throw new CommonBackendException(
+            throw new AppException(
                     String.format("Location with code already exists: %s", code), HttpStatus.CONFLICT);
         }
     }

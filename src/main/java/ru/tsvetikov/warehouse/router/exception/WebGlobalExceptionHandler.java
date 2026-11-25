@@ -11,8 +11,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class WebGlobalExceptionHandler {
 
-    @ExceptionHandler(CommonBackendException.class)
-    public String handleCommonBackendException(CommonBackendException e,
+    @ExceptionHandler(AppException.class)
+    public String handleCommonBackendException(AppException e,
                                                HttpServletRequest request,
                                                RedirectAttributes redirectAttributes) {
         String referer = request.getHeader("Referer");

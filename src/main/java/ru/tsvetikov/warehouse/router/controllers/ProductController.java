@@ -1,4 +1,4 @@
-package ru.tsvetikov.warehouse.router.controllers.api;
+package ru.tsvetikov.warehouse.router.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -13,9 +13,6 @@ import org.springframework.web.bind.annotation.*;
 import ru.tsvetikov.warehouse.router.model.dto.request.ProductRequest;
 import ru.tsvetikov.warehouse.router.model.dto.response.ProductResponse;
 import ru.tsvetikov.warehouse.router.service.ProductService;
-
-import java.util.List;
-
 
 @Tag(name = "Products", description = "Управление товарами на складе")
 @RestController
@@ -37,21 +34,23 @@ public class ProductController {
         return productService.getById(id);
     }
 
-    @Operation(summary = "Получить все товары с пагинацией")
+    @Operation(summary = "Получить все товары с пагинацией, фильтром по категории и поиском")
     @GetMapping
-    public Page<ProductResponse> getAll(@RequestParam(defaultValue = "1") @Min(1) Integer page,
-                                        @RequestParam(defaultValue = "10") @Min(1) @Max(100) Integer perPage,
-                                        @RequestParam(defaultValue = "sku") String sort,
-                                        @RequestParam(defaultValue = "ASC") Sort.Direction order) {
+    public Page<ProductResponse> getAll(
+            @RequestParam(required = false) Long category,
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "1") @Min(1) Integer page,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(100) Integer perPage,
+            @RequestParam(defaultValue = "sku") String sort,
+            @RequestParam(defaultValue = "ASC") Sort.Direction order
+    ) {
+        if (category != null) {
+            return productService.getByCategory(category, page, perPage, sort, order);
+        }
+        if (search != null && !search.isBlank()) {
+            return productService.search(search.trim(), page, perPage, sort, order);
+        }
         return productService.getAll(page, perPage, sort, order);
-    }
-
-    @Operation(summary = "Поиск товаров по SKU или названию")
-    @GetMapping("/search")
-    public List<ProductResponse> search(@RequestParam String query,
-                                        @RequestParam(defaultValue = "1") int page,
-                                        @RequestParam(defaultValue = "20") int size) {
-        return productService.search(query, page, size, "sku", Sort.Direction.ASC).getContent();
     }
 
     @Operation(summary = "Обновить товар")

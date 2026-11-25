@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>ru.tsvetikov.warehouse-route-optimizer</groupId>
-	<artifactId>warehouse-route-optimizer</artifactId>
+	<artifactId>warehouse-route-optimizer-backend</artifactId>
 	<version>1.0.0</version>
-	<name>warehouse-route-optimizer</name>
+	<name>warehouse-route-optimizer-backend</name>
 	<description>Intelligent warehouse routing system for combined placement and picking operations</description>
 
 	<properties>
@@ -84,15 +84,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-thymeleaf</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.thymeleaf.extras</groupId>
-			<artifactId>thymeleaf-extras-springsecurity6</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

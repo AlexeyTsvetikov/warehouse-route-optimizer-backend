@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import ru.tsvetikov.warehouse.router.exception.CommonBackendException;
+import ru.tsvetikov.warehouse.router.exception.AppException;
 import ru.tsvetikov.warehouse.router.model.db.entity.Location;
 import ru.tsvetikov.warehouse.router.model.db.entity.Product;
 import ru.tsvetikov.warehouse.router.model.db.entity.Stock;
@@ -80,7 +80,7 @@ public class StockService {
         Location location = locationService.getByCode(locationCode);
 
         Stock stock = stockRepository.findByProductAndLocationWithLock(product, location)
-                .orElseThrow(() -> new CommonBackendException(
+                .orElseThrow(() -> new AppException(
                         String.format("Stock not found for product %s at location %s", productSku, locationCode),
                         HttpStatus.NOT_FOUND));
 
@@ -89,7 +89,7 @@ public class StockService {
         int fromAvailable = quantity - fromReserve;
 
         if (fromAvailable > stock.getQuantity() - stock.getReservedQuantity()) {
-            throw new CommonBackendException(
+            throw new AppException(
                     String.format("Not enough available stock. Available: %d, Requested: %d",
                             stock.getQuantity() - stock.getReservedQuantity(), fromAvailable),
                     HttpStatus.CONFLICT);
@@ -124,7 +124,7 @@ public class StockService {
 
         int availableForTransfer = stockFrom.getQuantity() - stockFrom.getReservedQuantity();
         if (availableForTransfer < quantity) {
-            throw new CommonBackendException(
+            throw new AppException(
                     String.format("Not enough available stock in %s. Available: %d, Requested: %d",
                             fromLocationCode, availableForTransfer, quantity),
                     HttpStatus.CONFLICT);
@@ -157,7 +157,7 @@ public class StockService {
         }
 
         if (remaining > 0) {
-            throw new CommonBackendException(
+            throw new AppException(
                     String.format("Inconsistent state: failed to reserve full quantity for %s", productSku),
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -168,7 +168,7 @@ public class StockService {
     @Transactional(propagation = Propagation.MANDATORY)
     Stock findStockWithLock(Product product, Location location) {
         return stockRepository.findByProductAndLocationWithLock(product, location)
-                .orElseThrow(() -> new CommonBackendException(
+                .orElseThrow(() -> new AppException(
                         String.format("Stock not found at location %s", location.getCode()),
                         HttpStatus.NOT_FOUND));
     }
@@ -193,7 +193,7 @@ public class StockService {
             return stockRepository.findByProductAndLocationWithLock(product, location)
                     .orElseThrow(() -> {
                         log.warn("Stock disappeared after race condition at {}", location.getCode());
-                        return new CommonBackendException(
+                        return new AppException(
                                 "Concurrent stock operation failed. Please retry.",
                                 HttpStatus.CONFLICT);
                     });
@@ -203,13 +203,13 @@ public class StockService {
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public void checkAvailability(String productSku, Integer requiredQuantity) {
         if (requiredQuantity == null || requiredQuantity <= 0) {
-            throw new CommonBackendException("Quantity must be positive", HttpStatus.BAD_REQUEST);
+            throw new AppException("Quantity must be positive", HttpStatus.BAD_REQUEST);
         }
 
         Product product = productService.getBySku(productSku);
         int totalAvailable = stockRepository.sumAvailableQuantityByProductId(product.getId());
         if (totalAvailable < requiredQuantity) {
-            throw new CommonBackendException(
+            throw new AppException(
                     String.format("Not enough available stock for product %s. Required: %d, Available: %d",
                             productSku, requiredQuantity, totalAvailable),
                     HttpStatus.BAD_REQUEST);
@@ -224,7 +224,7 @@ public class StockService {
 
         int totalReserved = stocks.stream().mapToInt(Stock::getReservedQuantity).sum();
         if (totalReserved < quantity) {
-            throw new CommonBackendException(
+            throw new AppException(
                     String.format("Not enough reserved stock to release for product %s. Available reserved: %d, Requested: %d",
                             productSku, totalReserved, quantity),
                     HttpStatus.CONFLICT);
@@ -246,7 +246,7 @@ public class StockService {
 
     private void validateQuantity(Integer quantity) {
         if (quantity == null || quantity <= 0) {
-            throw new CommonBackendException(
+            throw new AppException(
                     String.format("Quantity must be positive, got: %s", quantity),
                     HttpStatus.BAD_REQUEST);
         }
@@ -258,7 +258,7 @@ public class StockService {
 
     private void validateTransfer(String fromLocationCode, String toLocationCode, Integer quantity) {
         if (fromLocationCode.equals(toLocationCode)) {
-            throw new CommonBackendException(
+            throw new AppException(
                     String.format("Source and destination locations cannot be same: %s", fromLocationCode),
                     HttpStatus.BAD_REQUEST);
         }

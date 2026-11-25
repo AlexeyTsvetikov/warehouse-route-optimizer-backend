@@ -10,7 +10,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import ru.tsvetikov.warehouse.router.event.TaskCompletedEvent;
-import ru.tsvetikov.warehouse.router.exception.CommonBackendException;
+import ru.tsvetikov.warehouse.router.exception.AppException;
 import ru.tsvetikov.warehouse.router.model.db.entity.*;
 import ru.tsvetikov.warehouse.router.model.db.repository.WarehouseTaskRepository;
 import ru.tsvetikov.warehouse.router.model.dto.request.WarehouseTaskRequest;
@@ -108,7 +108,7 @@ class WarehouseTaskServiceTest {
         when(warehouseTaskRepository.existsByTaskNumber("TASK-00001")).thenReturn(true);
 
         assertThatThrownBy(() -> warehouseTaskService.create(request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Failed to generate unique task number after 3 attempts");
 
         verify(warehouseTaskRepository, times(4)).findMaxId();
@@ -128,7 +128,7 @@ class WarehouseTaskServiceTest {
         when(locationService.getByCode(request.targetLocationCode())).thenReturn(location);
 
         assertThatThrownBy(() -> warehouseTaskService.create(request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Source location is required for PICKING task");
 
         verify(warehouseTaskRepository).findMaxId();
@@ -150,7 +150,7 @@ class WarehouseTaskServiceTest {
         when(locationService.getByCode(request.targetLocationCode())).thenReturn(location);
 
         assertThatThrownBy(() -> warehouseTaskService.create(request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Source location is required for PICKING task");
 
         verify(warehouseTaskRepository).findMaxId();
@@ -173,7 +173,7 @@ class WarehouseTaskServiceTest {
         when(locationService.getByCode(request.sourceLocationCode())).thenReturn(location);
 
         assertThatThrownBy(() -> warehouseTaskService.create(request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Target location is required for RECEIVING task");
 
         verify(warehouseTaskRepository).findMaxId();
@@ -196,7 +196,7 @@ class WarehouseTaskServiceTest {
         when(locationService.getByCode(request.sourceLocationCode())).thenReturn(location);
 
         assertThatThrownBy(() -> warehouseTaskService.create(request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Target location is required for RECEIVING task");
 
         verify(warehouseTaskRepository).findMaxId();
@@ -218,7 +218,7 @@ class WarehouseTaskServiceTest {
         when(productService.getBySku(request.productSku())).thenReturn(product);
 
         assertThatThrownBy(() -> warehouseTaskService.create(request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Both source and target locations are required for MOVEMENT task");
 
         verify(warehouseTaskRepository).findMaxId();
@@ -273,7 +273,7 @@ class WarehouseTaskServiceTest {
         when(productService.getBySku(request.productSku())).thenReturn(product);
 
         assertThatThrownBy(() -> warehouseTaskService.create(request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Both source and target locations are required for MOVEMENT task");
 
         verify(warehouseTaskRepository).findMaxId();
@@ -293,7 +293,7 @@ class WarehouseTaskServiceTest {
         when(productService.getBySku(request.productSku())).thenReturn(product);
 
         assertThatThrownBy(() -> warehouseTaskService.create(request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Both source and target locations are required for MOVEMENT task");
 
         verify(warehouseTaskRepository).findMaxId();
@@ -557,7 +557,7 @@ class WarehouseTaskServiceTest {
         when(warehouseTaskRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> warehouseTaskService.getById(id))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Task with id: %s not found", id);
 
         verify(warehouseTaskRepository).findById(id);
@@ -711,7 +711,7 @@ class WarehouseTaskServiceTest {
         when(warehouseTaskRepository.findById(id)).thenReturn(Optional.of(warehouseTask));
 
         assertThatThrownBy(() -> warehouseTaskService.update(id, request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Cannot update task with status: %s", warehouseTask.getStatus());
 
         verify(warehouseTaskRepository).findById(id);
@@ -787,7 +787,7 @@ class WarehouseTaskServiceTest {
         when(warehouseTaskRepository.findById(id)).thenReturn(Optional.of(warehouseTask));
 
         assertThatThrownBy(() -> warehouseTaskService.update(id, request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Quantity must be positive");
 
         verify(warehouseTaskRepository).findById(id);
@@ -807,7 +807,7 @@ class WarehouseTaskServiceTest {
         when(orderItemService.getRemainingQuantity(warehouseTask.getOrder(), warehouseTask.getProduct())).thenReturn(10);
 
         assertThatThrownBy(() -> warehouseTaskService.update(id, request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Cannot exceed remaining order quantity");
 
         verify(warehouseTaskRepository).findById(id);
@@ -914,7 +914,7 @@ class WarehouseTaskServiceTest {
 
 
         assertThatThrownBy(() -> warehouseTaskService.update(id, request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Cannot change product for task linked to order. Cancel this task and create a new one.");
 
         verify(warehouseTaskRepository).findById(id);
@@ -1253,7 +1253,7 @@ class WarehouseTaskServiceTest {
         when(warehouseTaskRepository.findById(id)).thenReturn(Optional.of(warehouseTask));
 
         assertThatThrownBy(() -> warehouseTaskService.update(id, request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Cannot change order for existing task");
 
         verify(warehouseTaskRepository).findById(id);
@@ -1430,7 +1430,7 @@ class WarehouseTaskServiceTest {
         when(warehouseTaskRepository.findById(id)).thenReturn(Optional.of(warehouseTask));
 
         assertThatThrownBy(() -> warehouseTaskService.update(id, request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Source location is required for PICKING task");
 
         verify(warehouseTaskRepository).findById(id);
@@ -1450,7 +1450,7 @@ class WarehouseTaskServiceTest {
         when(warehouseTaskRepository.findById(id)).thenReturn(Optional.of(warehouseTask));
 
         assertThatThrownBy(() -> warehouseTaskService.update(id, request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Target location is required for RECEIVING task");
 
         verify(warehouseTaskRepository).findById(id);
@@ -1471,7 +1471,7 @@ class WarehouseTaskServiceTest {
         when(warehouseTaskRepository.findById(id)).thenReturn(Optional.of(warehouseTask));
 
         assertThatThrownBy(() -> warehouseTaskService.update(id, request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Both source and target locations are required for MOVEMENT task");
 
         verify(warehouseTaskRepository).findById(id);
@@ -1549,7 +1549,7 @@ class WarehouseTaskServiceTest {
         when(warehouseTaskRepository.findById(id)).thenReturn(Optional.of(warehouseTask));
 
         assertThatThrownBy(() -> warehouseTaskService.update(id, request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Both source and target locations are required for MOVEMENT task");
 
         verify(warehouseTaskRepository).findById(id);
@@ -1612,7 +1612,7 @@ class WarehouseTaskServiceTest {
         when(warehouseTaskRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> warehouseTaskService.delete(id))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Task with id: %s not found", id);
 
         verify(warehouseTaskRepository).findById(id);
@@ -1629,7 +1629,7 @@ class WarehouseTaskServiceTest {
         when(warehouseTaskRepository.findById(id)).thenReturn(Optional.of(warehouseTask));
 
         assertThatThrownBy(() -> warehouseTaskService.delete(id))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Cannot cancel task with status: %s", warehouseTask.getStatus());
 
         verify(warehouseTaskRepository).findById(id);
@@ -1723,7 +1723,7 @@ class WarehouseTaskServiceTest {
         when(warehouseTaskRepository.findById(id)).thenReturn(Optional.of(warehouseTask));
 
         assertThatThrownBy(() -> warehouseTaskService.assignTask(id, username))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Cannot assign task with status: %s", warehouseTask.getStatus());
 
         verify(warehouseTaskRepository).findById(id);
@@ -1813,7 +1813,7 @@ class WarehouseTaskServiceTest {
         when(warehouseTaskRepository.findById(id)).thenReturn(Optional.of(warehouseTask));
 
         assertThatThrownBy(() -> warehouseTaskService.startTask(id))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Cannot start task with status: %s", warehouseTask.getStatus());
 
         verify(warehouseTaskRepository).findById(id);
@@ -1926,7 +1926,7 @@ class WarehouseTaskServiceTest {
         when(warehouseTaskRepository.findById(id)).thenReturn(Optional.of(warehouseTask));
 
         assertThatThrownBy(() -> warehouseTaskService.completeTask(id, confirmedQuantity))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Confirmed quantity cannot be negative");
 
         verify(warehouseTaskRepository).findById(id);
@@ -1947,7 +1947,7 @@ class WarehouseTaskServiceTest {
         when(warehouseTaskRepository.findById(id)).thenReturn(Optional.of(warehouseTask));
 
         assertThatThrownBy(() -> warehouseTaskService.completeTask(id, confirmedQuantity))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Cannot complete task with status: %s", warehouseTask.getStatus());
 
         verify(warehouseTaskRepository).findById(id);
@@ -1966,7 +1966,7 @@ class WarehouseTaskServiceTest {
         when(warehouseTaskRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> warehouseTaskService.completeTask(id, confirmedQuantity))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Task with id: %s not found", id);
 
         verify(warehouseTaskRepository).findById(id);
@@ -1987,7 +1987,7 @@ class WarehouseTaskServiceTest {
         when(warehouseTaskRepository.findById(id)).thenReturn(Optional.of(warehouseTask));
 
         assertThatThrownBy(() -> warehouseTaskService.completeTask(id, confirmedQuantity))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Source location is required for PICKING task");
 
         verify(warehouseTaskRepository).findById(id);
@@ -2008,7 +2008,7 @@ class WarehouseTaskServiceTest {
         when(warehouseTaskRepository.findById(id)).thenReturn(Optional.of(warehouseTask));
 
         assertThatThrownBy(() -> warehouseTaskService.completeTask(id, confirmedQuantity))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Both locations are required for MOVEMENT task");
 
         verify(warehouseTaskRepository).findById(id);
@@ -2029,7 +2029,7 @@ class WarehouseTaskServiceTest {
         when(warehouseTaskRepository.findById(id)).thenReturn(Optional.of(warehouseTask));
 
         assertThatThrownBy(() -> warehouseTaskService.completeTask(id, confirmedQuantity))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Both locations are required for MOVEMENT task");
 
         verify(warehouseTaskRepository).findById(id);
@@ -2050,7 +2050,7 @@ class WarehouseTaskServiceTest {
         when(warehouseTaskRepository.findById(id)).thenReturn(Optional.of(warehouseTask));
 
         assertThatThrownBy(() -> warehouseTaskService.completeTask(id, confirmedQuantity))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Target location is required for RECEIVING task");
 
         verify(warehouseTaskRepository).findById(id);
@@ -2071,7 +2071,7 @@ class WarehouseTaskServiceTest {
         when(warehouseTaskRepository.findById(id)).thenReturn(Optional.of(warehouseTask));
 
         assertThatThrownBy(() -> warehouseTaskService.completeTask(id, confirmedQuantity))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Unsupported task type for stock update: %s", warehouseTask.getType());
 
         verify(warehouseTaskRepository).findById(id);
@@ -2194,12 +2194,12 @@ class WarehouseTaskServiceTest {
                 WarehouseTaskStatus.COMPLETED
         );
 
-        when(userService.getUserEntityByUserName(username)).thenThrow(new CommonBackendException(
+        when(userService.getUserEntityByUserName(username)).thenThrow(new AppException(
                 String.format("User with username '%s' not found", username), HttpStatus.NOT_FOUND));
 
         assertThatThrownBy(() -> warehouseTaskService.getTasksByUserAndStatus(username, statuses, 0,
                 10, "createdAt", Sort.Direction.ASC))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("User with username '%s' not found", username);
 
         verify(userService).getUserEntityByUserName(username);

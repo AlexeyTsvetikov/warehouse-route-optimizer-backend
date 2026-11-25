@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 @RequiredArgsConstructor
-public class CommonBackendException extends RuntimeException {
+public class AppException extends RuntimeException {
     private final String message;
     private final HttpStatus status;
 

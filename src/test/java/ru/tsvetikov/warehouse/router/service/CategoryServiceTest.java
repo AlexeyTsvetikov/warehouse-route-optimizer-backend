@@ -6,7 +6,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.*;
-import ru.tsvetikov.warehouse.router.exception.CommonBackendException;
+import ru.tsvetikov.warehouse.router.exception.AppException;
 import ru.tsvetikov.warehouse.router.model.db.entity.Category;
 import ru.tsvetikov.warehouse.router.model.db.repository.CategoryRepository;
 import ru.tsvetikov.warehouse.router.model.dto.request.CategoryRequest;
@@ -67,7 +67,7 @@ class CategoryServiceTest {
         when(categoryRepository.existsByNameIgnoreCase("Electronics")).thenReturn(true);
 
         assertThatThrownBy(() -> categoryService.create(request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Category with name already exists");
 
         verifyNoInteractions(categoryMapper);
@@ -79,7 +79,7 @@ class CategoryServiceTest {
         CategoryRequest request = new CategoryRequest(null, "Description");
 
         assertThatThrownBy(() -> categoryService.create(request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Name must not be blank");
 
         verifyNoInteractions(categoryMapper);
@@ -91,7 +91,7 @@ class CategoryServiceTest {
         CategoryRequest request = new CategoryRequest("   ", "Description");
 
         assertThatThrownBy(() -> categoryService.create(request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Name must not be blank");
 
         verifyNoInteractions(categoryMapper);
@@ -127,7 +127,7 @@ class CategoryServiceTest {
         when(categoryRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> categoryService.getById(id))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Category with id: 99 not found");
 
         verify(categoryRepository).findById(id);
@@ -213,7 +213,7 @@ class CategoryServiceTest {
         when(categoryRepository.findByNameIgnoreCase(categoryName)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> categoryService.getCategoryEntityByCategoryName(categoryName))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Category with name 'Unknown' not found");
 
         verify(categoryRepository).findByNameIgnoreCase(categoryName);
@@ -267,7 +267,7 @@ class CategoryServiceTest {
         when(categoryRepository.existsByNameIgnoreCase("Products")).thenReturn(true);
 
         assertThatThrownBy(() -> categoryService.update(id, request))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("already exists");
 
         verify(categoryRepository, never()).save(any());
@@ -356,7 +356,7 @@ class CategoryServiceTest {
         when(categoryRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> categoryService.delete(id))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Category with id: 99 not found");
 
         verify(categoryRepository).findById(id);
@@ -377,7 +377,7 @@ class CategoryServiceTest {
         when(categoryRepository.findById(id)).thenReturn(Optional.of(entity));
 
         assertThatThrownBy(() -> categoryService.delete(id))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Category is already deleted");
 
         verify(categoryRepository).findById(id);
@@ -418,7 +418,7 @@ class CategoryServiceTest {
         when(categoryRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> categoryService.activate(id))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Category with id: 99 not found");
 
         verify(categoryRepository).findById(id);
@@ -439,7 +439,7 @@ class CategoryServiceTest {
         when(categoryRepository.findById(id)).thenReturn(Optional.of(entity));
 
         assertThatThrownBy(() -> categoryService.activate(id))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Category is already active");
 
         verify(categoryRepository).findById(id);

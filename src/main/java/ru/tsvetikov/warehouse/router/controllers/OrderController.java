@@ -1,4 +1,4 @@
-package ru.tsvetikov.warehouse.router.controllers.api;
+package ru.tsvetikov.warehouse.router.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -62,11 +62,6 @@ public class OrderController {
             return orderService.getByStatuses(statuses, page, perPage, sort, order);
         }
         return orderService.getAll(page, perPage, sort, order);
-    }
-
-    @GetMapping("/search")
-    public List<OrderResponse> search(@RequestParam String query) {
-        return orderService.search(query, 1, 20, "orderNumber", Sort.Direction.ASC).getContent();
     }
 
     @Operation(summary = "Обновить заказ")

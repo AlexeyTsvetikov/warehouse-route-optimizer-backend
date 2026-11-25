@@ -32,8 +32,8 @@ public class GlobalExceptionHandler {
         };
     }
 
-    @ExceptionHandler(CommonBackendException.class)
-    public ResponseEntity<ErrorMessage> handleCommonBackendException(CommonBackendException ex) {
+    @ExceptionHandler(AppException.class)
+    public ResponseEntity<ErrorMessage> handleCommonBackendException(AppException ex) {
         log.error("Common error: status={}, message={}", ex.getStatus(), ex.getMessage());
         return ResponseEntity.status(ex.getStatus()).body(new ErrorMessage(ex.getMessage()));
     }

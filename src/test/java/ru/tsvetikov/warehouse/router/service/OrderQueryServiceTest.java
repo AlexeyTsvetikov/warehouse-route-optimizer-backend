@@ -5,7 +5,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import ru.tsvetikov.warehouse.router.exception.CommonBackendException;
+import ru.tsvetikov.warehouse.router.exception.AppException;
 import ru.tsvetikov.warehouse.router.model.db.entity.Order;
 import ru.tsvetikov.warehouse.router.model.db.repository.OrderRepository;
 import ru.tsvetikov.warehouse.router.testdata.OrderTestData;
@@ -47,7 +47,7 @@ class OrderQueryServiceTest {
         when(orderRepository.findByOrderNumber(orderNumber)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> orderQueryService.getOrderEntityByNumber(orderNumber))
-                .isInstanceOf(CommonBackendException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Order with number '%s' not found", orderNumber);
 
         verify(orderRepository).findByOrderNumber(orderNumber);

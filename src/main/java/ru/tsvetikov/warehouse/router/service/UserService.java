@@ -10,7 +10,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.tsvetikov.warehouse.router.exception.CommonBackendException;
+import ru.tsvetikov.warehouse.router.exception.AppException;
 import ru.tsvetikov.warehouse.router.model.db.entity.User;
 import ru.tsvetikov.warehouse.router.model.db.repository.UserRepository;
 import ru.tsvetikov.warehouse.router.model.dto.request.ChangePasswordRequest;
@@ -83,7 +83,7 @@ public class UserService {
     @Transactional(readOnly = true)
     public User getUserEntityByUserName(String username) {
         return userRepository.findByUsername(username)
-                .orElseThrow(() -> new CommonBackendException(
+                .orElseThrow(() -> new AppException(
                         String.format("User with username '%s' not found", username), HttpStatus.NOT_FOUND));
     }
 
@@ -108,7 +108,7 @@ public class UserService {
         User user = findUserOrThrow(id);
 
         if (!user.getIsActive()) {
-            throw new CommonBackendException("User is already deleted", HttpStatus.CONFLICT);
+            throw new AppException("User is already deleted", HttpStatus.CONFLICT);
         }
 
         user.setIsActive(false);
@@ -120,7 +120,7 @@ public class UserService {
         User user = findUserOrThrow(id);
 
         if (user.getIsActive()) {
-            throw new CommonBackendException("User is already active", HttpStatus.CONFLICT);
+            throw new AppException("User is already active", HttpStatus.CONFLICT);
         }
 
         user.setIsActive(true);
@@ -132,7 +132,7 @@ public class UserService {
     public void changePasswordForCurrentUser(ChangePasswordRequest request) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         User user = userRepository.findByUsername(auth.getName())
-                .orElseThrow(() -> new CommonBackendException("User not found", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new AppException("User not found", HttpStatus.NOT_FOUND));
         applyNewPassword(user, request);
     }
 
@@ -151,13 +151,13 @@ public class UserService {
 
     private User findUserOrThrow(Long id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new CommonBackendException(
+                .orElseThrow(() -> new AppException(
                         String.format("User with id: %s not found", id), HttpStatus.NOT_FOUND));
     }
 
     private void applyNewPassword(User user, ChangePasswordRequest request) {
         if (!passwordEncoder.matches(request.oldPassword(), user.getPasswordHash())) {
-            throw new CommonBackendException("Старый пароль неверен", HttpStatus.CONFLICT);
+            throw new AppException("Старый пароль неверен", HttpStatus.CONFLICT);
         }
         user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
         userRepository.save(user);
@@ -165,14 +165,14 @@ public class UserService {
 
     private String formatUsername(String username) {
         if (username == null || username.isBlank()) {
-            throw new CommonBackendException("Username must not be blank", HttpStatus.BAD_REQUEST);
+            throw new AppException("Username must not be blank", HttpStatus.BAD_REQUEST);
         }
         return username.toLowerCase();
     }
 
     private void checkUsernameUniqueness(String username) {
         if (userRepository.existsByUsernameIgnoreCase(username)) {
-            throw new CommonBackendException(
+            throw new AppException(
                     String.format("User with username '%s' already exists", username), HttpStatus.CONFLICT);
         }
     }
