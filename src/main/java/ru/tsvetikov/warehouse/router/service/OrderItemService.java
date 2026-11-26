@@ -22,9 +22,6 @@ import ru.tsvetikov.warehouse.router.model.enums.OrderType;
 import ru.tsvetikov.warehouse.router.model.mapper.OrderItemMapper;
 import ru.tsvetikov.warehouse.router.utils.PaginationUtils;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 
 @Slf4j
 @Service
@@ -73,15 +70,6 @@ public class OrderItemService {
         Page<OrderItem> items = orderItemRepository.findByOrderId(order.getId(), pageRequest);
 
         return items.map(orderItemMapper::toResponseDto);
-    }
-
-    @Transactional(readOnly = true)
-    public List<OrderItemResponse> getByOrderForWeb(String orderNumber) {
-        Order order = findOrderByNumberOrThrow(orderNumber);
-        List<OrderItem> items = orderItemRepository.findByOrderIdOrderByIdAsc(order.getId()); // сортировка по id
-        return items.stream()
-                .map(orderItemMapper::toResponseDto)
-                .collect(Collectors.toList());
     }
 
     @Transactional

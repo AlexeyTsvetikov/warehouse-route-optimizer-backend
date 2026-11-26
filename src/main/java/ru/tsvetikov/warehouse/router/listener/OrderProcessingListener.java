@@ -31,7 +31,7 @@ public class OrderProcessingListener {
     private final OrderRepository orderRepository;
     private final OrderService orderService;
     private final WarehouseTaskManager warehouseTaskManager;
-    private final StockService stockService;
+    private final StockService  stockService;
 
     @EventListener
     public void onOrderProcessingStarted(OrderProcessingStartedEvent event) {

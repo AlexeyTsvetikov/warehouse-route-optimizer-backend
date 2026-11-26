@@ -21,9 +21,6 @@ import ru.tsvetikov.warehouse.router.model.enums.Role;
 import ru.tsvetikov.warehouse.router.model.mapper.UserMapper;
 import ru.tsvetikov.warehouse.router.utils.PaginationUtils;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 
 @Service
 @RequiredArgsConstructor
@@ -57,13 +54,6 @@ public class UserService {
         Pageable pageRequest = PaginationUtils.getPageRequest(page, perPage, sort, order);
         return userRepository.findAllByIsActiveTrue(pageRequest)
                 .map(userMapper::toResponseDto);
-    }
-
-    @Transactional(readOnly = true)
-    public List<UserResponse> getAllActiveUsers() {
-        return userRepository.findAllByIsActiveTrue(Sort.by("username")).stream()
-                .map(userMapper::toResponseDto)
-                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)

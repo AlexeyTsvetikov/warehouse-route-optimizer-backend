@@ -17,7 +17,11 @@ import ru.tsvetikov.warehouse.router.model.enums.LocationType;
 import ru.tsvetikov.warehouse.router.model.mapper.LocationMapper;
 import ru.tsvetikov.warehouse.router.utils.PaginationUtils;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -114,6 +118,19 @@ public class LocationService {
         return locationRepository.findById(id)
                 .orElseThrow(() -> new AppException(
                         String.format("Location with id: %s not found", id), HttpStatus.NOT_FOUND));
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Location> getLocationsByCodes(Collection<String> codes) {
+        if (codes == null || codes.isEmpty()) {
+            return Map.of();
+        }
+        return locationRepository.findByCodeInIgnoreCase(codes).stream()
+                .collect(Collectors.toMap(
+                        loc -> loc.getCode().toUpperCase(),
+                        Function.identity(),
+                        (existing, replacement) -> existing
+                ));
     }
 
     private void validateCode(String code) {

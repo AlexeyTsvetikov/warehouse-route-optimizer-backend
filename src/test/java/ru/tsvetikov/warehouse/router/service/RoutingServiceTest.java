@@ -14,8 +14,15 @@ import ru.tsvetikov.warehouse.router.testdata.WarehouseTaskTestData;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
+
+import java.util.Map;
+import java.util.Set;
+
+import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class RoutingServiceTest {
@@ -34,6 +41,7 @@ class RoutingServiceTest {
         assertThat(result.tspOrder()).isEmpty();
         assertThat(result.fifoDistance()).isEqualTo(0);
         assertThat(result.tspDistance()).isEqualTo(0);
+        verifyNoInteractions(locationService);
     }
 
     @Test
@@ -42,7 +50,8 @@ class RoutingServiceTest {
                 .sourceLocationCode("RECV-01").targetLocationCode("RECV-04").build();
         Location location = LocationTestData.entityBuilder().id(1L).code("RECV-01").build();
 
-        when(locationService.getByCode(anyString())).thenReturn(location);
+        when(locationService.getLocationsByCodes(anyCollection()))
+                .thenReturn(Map.of("RECV-01", location));
 
         RouteResponse result = routingService.calculateCombinedRoute(List.of(response), 20.0, 40.0);
 
@@ -50,6 +59,7 @@ class RoutingServiceTest {
         assertThat(result.tspOrder()).containsExactly(response);
         assertThat(result.fifoDistance()).isEqualTo(35.0);
         assertThat(result.tspDistance()).isEqualTo(35.0);
+        verify(locationService, times(1)).getLocationsByCodes(Set.of("RECV-01"));
     }
 
     @Test
@@ -62,8 +72,8 @@ class RoutingServiceTest {
         Location locA = LocationTestData.entityBuilder().id(1L).code("A").coordX(100.0).coordY(100.0).build();
         Location locB = LocationTestData.entityBuilder().id(2L).code("B").coordX(10.0).coordY(10.0).build();
 
-        when(locationService.getByCode("A")).thenReturn(locA);
-        when(locationService.getByCode("B")).thenReturn(locB);
+        when(locationService.getLocationsByCodes(anyCollection()))
+                .thenReturn(Map.of("A", locA, "B", locB));
 
         RouteResponse result = routingService.calculateCombinedRoute(List.of(task1, task2), 0.0, 0.0);
 
@@ -71,6 +81,7 @@ class RoutingServiceTest {
         assertThat(result.tspOrder()).containsExactly(task2, task1);
         assertThat(result.fifoDistance()).isEqualTo(380.0);
         assertThat(result.tspDistance()).isEqualTo(200.0);
+        verify(locationService, times(1)).getLocationsByCodes(Set.of("A", "B"));
     }
 
     @Test
@@ -82,7 +93,8 @@ class RoutingServiceTest {
 
         Location locA = LocationTestData.entityBuilder().id(1L).code("A").coordX(100.0).coordY(100.0).build();
 
-        when(locationService.getByCode("A")).thenReturn(locA);
+        when(locationService.getLocationsByCodes(anyCollection()))
+                .thenReturn(Map.of("A", locA));
 
         RouteResponse result = routingService.calculateCombinedRoute(List.of(task1, task2), 0.0, 0.0);
 
@@ -90,6 +102,7 @@ class RoutingServiceTest {
         assertThat(result.tspOrder()).containsExactly(task1, task2);
         assertThat(result.fifoDistance()).isEqualTo(200.0);
         assertThat(result.tspDistance()).isEqualTo(200.0);
+        verify(locationService, times(1)).getLocationsByCodes(Set.of("A"));
     }
 
     @Test
@@ -102,8 +115,8 @@ class RoutingServiceTest {
         Location locA = LocationTestData.entityBuilder().id(1L).code("A").coordX(100.0).coordY(100.0).build();
         Location locB = LocationTestData.entityBuilder().id(2L).code("B").coordX(10.0).coordY(10.0).build();
 
-        when(locationService.getByCode("A")).thenReturn(locA);
-        when(locationService.getByCode("B")).thenReturn(locB);
+        when(locationService.getLocationsByCodes(anyCollection()))
+                .thenReturn(Map.of("A", locA, "B", locB));
 
         RouteResponse result = routingService.calculateCombinedRoute(List.of(task1, task2), 0.0, 0.0);
 
@@ -111,5 +124,6 @@ class RoutingServiceTest {
         assertThat(result.tspOrder()).containsExactly(task2, task1);
         assertThat(result.fifoDistance()).isEqualTo(380.0);
         assertThat(result.tspDistance()).isEqualTo(200.0);
+        verify(locationService, times(1)).getLocationsByCodes(Set.of("A", "B"));
     }
 }

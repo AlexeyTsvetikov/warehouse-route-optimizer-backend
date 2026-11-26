@@ -32,8 +32,10 @@ public interface StockRepository extends JpaRepository<Stock, Long> {
                                                      @Param("fromX") double fromX,
                                                      @Param("fromY") double fromY);
 
+    @EntityGraph(attributePaths = {"product", "location"})
     List<Stock> findByProductId(Long productId);
 
+    @EntityGraph(attributePaths = {"product", "location"})
     @Query("SELECT s FROM Stock s WHERE (:locationCode = '' OR s.location.code = :locationCode) AND " +
            "(:search = '' OR LOWER(s.product.sku) LIKE LOWER(CONCAT('%', :search, '%')))")
     Page<Stock> findFiltered(@Param("locationCode") String locationCode, @Param("search") String search, Pageable pageable);

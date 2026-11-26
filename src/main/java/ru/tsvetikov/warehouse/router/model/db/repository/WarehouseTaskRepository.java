@@ -2,9 +2,11 @@ package ru.tsvetikov.warehouse.router.model.db.repository;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 import ru.tsvetikov.warehouse.router.model.db.entity.WarehouseTask;
 import ru.tsvetikov.warehouse.router.model.enums.WarehouseTaskStatus;
@@ -15,14 +17,32 @@ import java.util.Optional;
 
 @Repository
 public interface WarehouseTaskRepository extends JpaRepository<WarehouseTask, Long> {
+    @Override
+    @NonNull
+    @EntityGraph(attributePaths = {"assignedUser", "product", "sourceLocation", "targetLocation", "order"})
+    Page<WarehouseTask> findAll(@NonNull Pageable pageable);
+
+    @Override
+    @NonNull
+    @EntityGraph(attributePaths = {
+            "assignedUser",
+            "product",
+            "sourceLocation",
+            "targetLocation",
+            "order"
+    })
+    Optional<WarehouseTask> findById(@NonNull Long id);
+
     boolean existsByTaskNumber(String taskNumber);
 
     @Query("SELECT MAX(wt.id) FROM WarehouseTask wt")
     Optional<Long> findMaxId();
 
+    @EntityGraph(attributePaths = {"assignedUser", "product", "sourceLocation", "targetLocation", "order"})
     Page<WarehouseTask> findByAssignedUserIdAndStatusIn(Long assignedUserId, List<WarehouseTaskStatus> statuses,
                                                         Pageable pageable);
 
+    @EntityGraph(attributePaths = {"assignedUser", "product", "sourceLocation", "targetLocation", "order"})
     @Query("SELECT t FROM WarehouseTask t " +
            "LEFT JOIN t.product p " +
            "LEFT JOIN t.order o " +
@@ -32,6 +52,7 @@ public interface WarehouseTaskRepository extends JpaRepository<WarehouseTask, Lo
            "OR LOWER(t.type) LIKE LOWER(CONCAT('%', :query, '%'))")
     Page<WarehouseTask> search(@Param("query") String query, Pageable pageable);
 
+    @EntityGraph(attributePaths = {"assignedUser", "product", "sourceLocation", "targetLocation", "order"})
     Page<WarehouseTask> findByStatus(WarehouseTaskStatus status, Pageable pageable);
 
     @Query("SELECT t FROM WarehouseTask t WHERE t.order.orderNumber = :orderNumber AND t.type = :type")

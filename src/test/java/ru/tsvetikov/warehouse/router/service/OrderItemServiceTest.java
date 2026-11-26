@@ -253,40 +253,6 @@ class OrderItemServiceTest {
     }
 
     @Test
-    void shouldReturnPageOfOrderItemsByOrderForWeb() {
-        String orderNumber = "ORD-00001";
-        OrderItem entity = OrderItemTestData.entityBuilder().id(1L).build();
-        Order order = OrderTestData.entityBuilder().id(1L).build();
-        OrderItemResponse response = OrderItemTestData.response();
-
-        when(orderQueryService.getOrderEntityByNumber(orderNumber)).thenReturn(order);
-        when(orderItemRepository.findByOrderIdOrderByIdAsc(order.getId())).thenReturn(List.of(entity));
-        when(orderItemMapper.toResponseDto(entity)).thenReturn(response);
-
-        List<OrderItemResponse> result = orderItemService.getByOrderForWeb(orderNumber);
-
-        assertThat(result.getFirst()).isEqualTo(response);
-        verify(orderQueryService).getOrderEntityByNumber(orderNumber);
-        verify(orderItemRepository).findByOrderIdOrderByIdAsc(order.getId());
-    }
-
-    @Test
-    void shouldThrowWhenOrderNotFoundOnGetByOrderForWeb() {
-        String orderNumber = "ORD-00001";
-
-        when(orderQueryService.getOrderEntityByNumber(orderNumber)).
-                thenThrow(new AppException("Order with number 'ORD-00001' not found", HttpStatus.NOT_FOUND));
-
-        assertThatThrownBy(() -> orderItemService.getByOrderForWeb(orderNumber))
-                .isInstanceOf(AppException.class)
-                .hasMessageContaining("Order with number '%s' not found", orderNumber);
-
-        verifyNoInteractions(orderItemMapper);
-        verifyNoInteractions(orderItemRepository);
-        verify(orderQueryService).getOrderEntityByNumber(orderNumber);
-    }
-
-    @Test
     void shouldUpdateOrderItem() {
         String orderNumber = "ORD-00001";
         Long id = 1L;

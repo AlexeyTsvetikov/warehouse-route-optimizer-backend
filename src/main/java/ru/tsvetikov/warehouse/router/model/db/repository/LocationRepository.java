@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import ru.tsvetikov.warehouse.router.model.db.entity.Location;
 import ru.tsvetikov.warehouse.router.model.enums.LocationType;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,4 +28,6 @@ public interface LocationRepository extends JpaRepository<Location, Long> {
     Page<Location> searchActive(@Param("query") String query, Pageable pageable);
 
     List<Location> findByType(LocationType locationType);
+
+    List<Location> findByCodeInIgnoreCase(Collection<String> codes);
 }

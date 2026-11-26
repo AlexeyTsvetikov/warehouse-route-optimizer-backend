@@ -7,13 +7,12 @@ import ru.tsvetikov.warehouse.router.model.db.entity.Location;
 import ru.tsvetikov.warehouse.router.model.dto.response.RouteResponse;
 import ru.tsvetikov.warehouse.router.model.dto.response.WarehouseTaskResponse;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class RoutingService {
 
     private final LocationService locationService;
@@ -23,33 +22,36 @@ public class RoutingService {
             return new RouteResponse(List.of(), List.of(), 0, 0);
         }
 
-        // FIFO — исходный порядок для сравнения
-        double fifoDistance = calculateTotalDistance(allTasks, startX, startY);
+        Set<String> codes = allTasks.stream()
+                .map(this::getLocationCode)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
 
-        // Жадный TSP для всех задач (RECEIVING + PICKING вместе)
+        Map<String, Location> locationsMap = locationService.getLocationsByCodes(codes);
+
+        double fifoDistance = calculateTotalDistance(allTasks, startX, startY, locationsMap);
+
         List<WarehouseTaskResponse> remaining = new ArrayList<>(allTasks);
         List<WarehouseTaskResponse> tspOrder = new ArrayList<>();
-
         double currentX = startX, currentY = startY;
 
         while (!remaining.isEmpty()) {
             double finalCurrentX = currentX, finalCurrentY = currentY;
             WarehouseTaskResponse nearest = remaining.stream()
-                    .min(Comparator.comparingDouble(t -> distanceFromPoint(t, finalCurrentX, finalCurrentY)))
-                    .orElseThrow(); // всегда есть элемент
+                    .min(Comparator.comparingDouble(t -> distanceFromPoint(t, finalCurrentX, finalCurrentY, locationsMap)))
+                    .orElseThrow();
 
             tspOrder.add(nearest);
             remaining.remove(nearest);
 
-            String locCode = getLocationCode(nearest);
-            if (locCode != null) {
-                Location loc = locationService.getByCode(locCode);
+            Location loc = getLocation(nearest, locationsMap);
+            if (loc != null) {
                 currentX = loc.getCoordX();
                 currentY = loc.getCoordY();
             }
         }
 
-        double tspDistance = calculateTotalDistance(tspOrder, startX, startY);
+        double tspDistance = calculateTotalDistance(tspOrder, startX, startY, locationsMap);
 
         log.info("Combined route: FIFO={}m, TSP={}m, Saved={}m ({}%)",
                 fifoDistance, tspDistance,
@@ -59,27 +61,19 @@ public class RoutingService {
         return new RouteResponse(allTasks, tspOrder, fifoDistance, tspDistance);
     }
 
-    private double distanceFromPoint(WarehouseTaskResponse task, double x, double y) {
-        String locCode = getLocationCode(task);
-        if (locCode == null) return Double.MAX_VALUE;
-        Location loc = locationService.getByCode(locCode);
+    private double distanceFromPoint(WarehouseTaskResponse task, double x, double y, Map<String, Location> locationsMap) {
+        Location loc = getLocation(task, locationsMap);
+        if (loc == null) return Double.MAX_VALUE;
         return Math.abs(loc.getCoordX() - x) + Math.abs(loc.getCoordY() - y);
     }
 
-    private String getLocationCode(WarehouseTaskResponse task) {
-        if (task.sourceLocationCode() != null) return task.sourceLocationCode();
-        if (task.targetLocationCode() != null) return task.targetLocationCode();
-        return null;
-    }
-
-    private double calculateTotalDistance(List<WarehouseTaskResponse> tasks, double startX, double startY) {
+    private double calculateTotalDistance(List<WarehouseTaskResponse> tasks, double startX, double startY, Map<String, Location> locationsMap) {
         double total = 0;
         double prevX = startX, prevY = startY;
 
         for (WarehouseTaskResponse task : tasks) {
-            String locCode = getLocationCode(task);
-            if (locCode != null) {
-                Location loc = locationService.getByCode(locCode);
+            Location loc = getLocation(task, locationsMap);
+            if (loc != null) {
                 total += Math.abs(loc.getCoordX() - prevX) + Math.abs(loc.getCoordY() - prevY);
                 prevX = loc.getCoordX();
                 prevY = loc.getCoordY();
@@ -87,5 +81,16 @@ public class RoutingService {
         }
 
         return Math.round(total * 100.0) / 100.0;
+    }
+
+    private Location getLocation(WarehouseTaskResponse task, Map<String, Location> locationsMap) {
+        String code = getLocationCode(task);
+        return code != null ? locationsMap.get(code.toUpperCase()) : null;
+    }
+
+    private String getLocationCode(WarehouseTaskResponse task) {
+        if (task.sourceLocationCode() != null) return task.sourceLocationCode();
+        if (task.targetLocationCode() != null) return task.targetLocationCode();
+        return null;
     }
 }

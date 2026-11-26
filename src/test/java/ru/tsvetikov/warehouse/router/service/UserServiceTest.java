@@ -157,21 +157,6 @@ class UserServiceTest {
     }
 
     @Test
-    void shouldReturnListOfActiveUsers() {
-        UserResponse response = UserTestData.response();
-        User entity = UserTestData.entityBuilder().id(1L).build();
-
-        when(userRepository.findAllByIsActiveTrue(Sort.by("username"))).thenReturn(List.of(entity));
-        when(userMapper.toResponseDto(entity)).thenReturn(response);
-
-        List<UserResponse> result = userService.getAllActiveUsers();
-
-        assertThat(result).isEqualTo(List.of(response));
-        verify(userRepository).findAllByIsActiveTrue(Sort.by("username"));
-        verify(userMapper).toResponseDto(entity);
-    }
-
-    @Test
     void shouldReturnPageOfUsersSortedByRole() {
         User entity = UserTestData.entityBuilder().id(1L).build();
         UserResponse response = UserTestData.response();
